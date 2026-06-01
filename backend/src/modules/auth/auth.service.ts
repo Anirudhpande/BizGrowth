@@ -119,7 +119,7 @@ class AuthService {
     }
 
     // 4. Compare password
-    const isPasswordValid = await User.comparePassword(password, user.password);
+    const isPasswordValid = await User.comparePassword(password, user.password || '');
     if (!isPasswordValid) {
       throw new AppError('Invalid email or password', 401);
     }

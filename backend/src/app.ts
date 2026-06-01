@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 
 // Route imports
 import authRoutes from './modules/auth/auth.routes';
+import usersRoutes from './modules/users/users.routes';
 
 // Middleware imports
 import errorHandler from './middleware/errorHandler';
@@ -71,6 +72,7 @@ if (process.env.NODE_ENV === 'development') {
 // ============================================================
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {
