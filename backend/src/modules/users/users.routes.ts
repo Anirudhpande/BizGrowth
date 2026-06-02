@@ -12,17 +12,21 @@ const router = Router();
 // ---- Self Profile (authenticated user) ----
 
 /**
- * @route   GET /api/users/profile
+ * @route   GET /api/users/me
  * @desc    Get own profile
  * @access  Private
  */
-router.get('/profile', authenticate, usersController.getOwnProfile);
+router.get('/me', authenticate, usersController.getOwnProfile);
 
 /**
- * @route   PUT /api/users/profile
+ * @route   PATCH /api/users/me
  * @desc    Update own profile
  * @access  Private
  */
+router.patch('/me', authenticate, usersController.updateOwnProfile);
+
+// Aliases for backward compatibility
+router.get('/profile', authenticate, usersController.getOwnProfile);
 router.put('/profile', authenticate, usersController.updateOwnProfile);
 
 // ---- Admin Routes ----
