@@ -6,6 +6,13 @@ import Ecosystem from './pages/Ecosystem'
 import Resources from './pages/Resources'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
+import Profile from './pages/Profile'
+import MyOrganizations from './pages/MyOrganizations'
+import OrganizationDetail from './pages/OrganizationDetail'
+import OrganizationForm from './pages/OrganizationForm'
+import AdminDashboard from './pages/AdminDashboard'
 import './App.css'
 
 export default function App() {
@@ -19,11 +26,26 @@ export default function App() {
       
       <main className={`${!isAuthRoute ? 'pt-20' : ''} flex-grow`}>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/ecosystem" element={<Ecosystem />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          {/* Protected Routes Infrastructure */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/organizations" element={<MyOrganizations />} />
+            <Route path="/organizations/new" element={<OrganizationForm />} />
+            <Route path="/organizations/:id" element={<OrganizationDetail />} />
+            <Route path="/organizations/:id/edit" element={<OrganizationForm />} />
+          </Route>
+
+          {/* Admin Routes Infrastructure */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Route>
         </Routes>
       </main>
 
