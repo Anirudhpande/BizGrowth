@@ -40,6 +40,21 @@ class AuthController {
       next(error);
     }
   }
+  async refreshToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { refreshToken } = req.body;
+
+    const result = await authService.refreshToken(refreshToken);
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
 
   /**
    * GET /api/auth/me

@@ -140,8 +140,18 @@ export interface LoginInput {
 
 export interface AuthResponse {
   success: true;
-  token: string;
+  accessToken: string;
+  refreshToken: string;
   user: SafeUser;
+}
+
+export interface RefreshTokenInput {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  success: true;
+  accessToken: string;
 }
 
 // ============================================================

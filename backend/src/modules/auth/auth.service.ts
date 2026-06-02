@@ -82,14 +82,16 @@ class AuthService {
     });
 
     // 4. Generate JWT
-    const token = this.generateToken(user);
+   const accessToken = this.generateToken(user);
+const refreshToken = this.generateToken(user);
 
     // 5. Return response
-    return {
-      success: true,
-      token,
-      user: User.sanitize(user),
-    };
+   return {
+  success: true,
+  accessToken,
+  refreshToken,
+  user: User.sanitize(user),
+};
   }
 
   // ----------------------------------------------------------
@@ -125,36 +127,52 @@ class AuthService {
     }
 
     // 5. Generate JWT
-    const token = this.generateToken(user);
+    const accessToken = this.generateToken(user);
+const refreshToken = this.generateToken(user);
 
     // 6. Return response
-    return {
-      success: true,
-      token,
-      user: User.sanitize(user),
-    };
+   return {
+  success: true,
+  accessToken,
+  refreshToken,
+  user: User.sanitize(user),
+};
   }
 
   // ----------------------------------------------------------
   // Get Current User (Me)
   // ----------------------------------------------------------
 
-  async getCurrentUser(userId: string): Promise<SafeUser> {
-    const user = await User.findById(userId);
+   
+async getCurrentUser(userId: string): Promise<SafeUser> {
+  const user = await User.findById(userId);
 
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    if (user.status === 'suspended') {
-      throw new AppError(
-        'Your account has been suspended. Please contact support.',
-        403
-      );
-    }
-
-    return User.sanitize(user);
+  if (!user) {
+    throw new AppError('User not found', 404);
   }
+
+  if (user.status === 'suspended') {
+    throw new AppError(
+      'Your account has been suspended. Please contact support.',
+      403
+    );
+  }
+
+  return User.sanitize(user);
+}
+
+async refreshToken(refreshToken: string): Promise<AuthResponse> {
+  if (!refreshToken) {
+    throw new AppError('Refresh token is required', 400);
+  }
+
+  return {
+    success: true,
+    accessToken: refreshToken,
+    refreshToken,
+    user: {} as SafeUser,
+  };
+}
 }
 
 export default new AuthService();
