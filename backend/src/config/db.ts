@@ -1,53 +1,51 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Pool, QueryResult } from 'pg';
+import dotenv from 'dotenv';
 
-// ============================================================
-// Supabase Client
-// ============================================================
+dotenv.config();
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const connectionString = process.env.DATABASE_URL;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('❌ SUPABASE_URL and SUPABASE_KEY must be defined in environment variables');
+if (!connectionString) {
+  console.error('❌ DATABASE_URL must be defined in environment variables');
   process.exit(1);
 }
 
 /**
- * Singleton Supabase client instance.
- * Uses the anon/service-role key for server-side database access.
+ * PostgreSQL connection pool.
  */
-const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-    detectSessionInUrl: false,
+export const pool = new Pool({
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false, // Required for Supabase SSL connection
   },
 });
 
 /**
- * Verifies Supabase connectivity by performing a lightweight query.
- * Call this during server startup to fail fast on misconfiguration.
+ * Helper query function to execute queries on the pool.
+ */
+export const query = (text: string, params?: any[]): Promise<QueryResult> => {
+  return pool.query(text, params);
+};
+
+/**
+ * Verifies database connectivity on startup.
  */
 export const verifyConnection = async (): Promise<void> => {
   try {
-    const { error } = await supabase.from('users').select('id').limit(1);
-
-    if (error) {
-      // Table might not exist yet — that's ok during first run
-      if (error.code === '42P01') {
-        console.warn('⚠️  Supabase connected, but "users" table does not exist.');
-        console.warn('   Run the SQL migration in your Supabase dashboard to create it.');
-        return;
-      }
-      throw error;
+    const res = await query('SELECT 1');
+    if (!res || res.rows.length === 0) {
+      throw new Error('No response from database');
     }
-
-    console.log('✅ Supabase connected successfully');
+    console.log('✅ PostgreSQL database connected successfully');
   } catch (error) {
     const err = error as Error;
-    console.error(`❌ Supabase connection check failed: ${err.message}`);
-    console.warn('⚠️  Server will start, but database operations may fail.');
+    console.error(`❌ PostgreSQL connection check failed: ${err.message}`);
+    process.exit(1);
   }
 };
 
-export default supabase;
+export default {
+  pool,
+  query,
+  verifyConnection,
+};
