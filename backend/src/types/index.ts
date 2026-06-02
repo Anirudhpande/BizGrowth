@@ -161,3 +161,39 @@ export interface ApiErrorResponse {
   message: string;
   errors?: Record<string, string>[];
 }
+
+// ============================================================
+// Organization Types
+// ============================================================
+
+export interface OrganizationRow {
+  id: string;
+  name: string;
+  description: string | null;
+  industry: string | null;
+  user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IOrganization {
+  id: string;
+  name: string;
+  description: string;
+  industry: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateOrganizationInput {
+  name: string;
+  description?: string;
+  industry?: string;
+}
+
+export interface UpdateOrganizationInput {
+  name?: string;
+  description?: string;
+  industry?: string;
+}
