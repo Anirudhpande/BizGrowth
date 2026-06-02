@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Register() {
   const [name, setName] = useState('')
@@ -7,37 +8,18 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('client')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { register, loading } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed. Please try again.')
-      }
-
-      // Save token and navigate
-      localStorage.setItem('token', data.token)
-      
-      // Dispatch storage event so Navbar detects login immediately
-      window.dispatchEvent(new Event('storage'))
-
+      await register(name, email, password, role)
       navigate('/')
     } catch (err) {
       setError(err.message)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -120,7 +102,6 @@ export default function Register() {
             >
               <option value="client">Client Node (Corporate / MSME)</option>
               <option value="consultant">Strategic Consultant</option>
-              <option value="admin">System Administrator</option>
             </select>
           </div>
 
