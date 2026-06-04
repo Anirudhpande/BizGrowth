@@ -30,6 +30,24 @@ class OrganizationsController {
   }
 
   /**
+   * GET /api/organizations/user/:userId
+   * Get all organizations belonging to the specified user.
+   */
+  async getUserOrganizations(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const userId = req.params.userId as string;
+      const organizations = await orgsService.getUserOrganizations(userId);
+      res.status(200).json({ success: true, data: organizations });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * GET /api/organizations/:id
    * Get an organization by ID (public access).
    */

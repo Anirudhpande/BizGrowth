@@ -32,6 +32,27 @@ class OrganizationsService {
   }
 
   /**
+   * Get all organizations belonging to a specified user.
+   */
+  async getUserOrganizations(userId: string): Promise<any[]> {
+    const orgs = await Organizations.findByUserId(userId);
+    return orgs.map(org => {
+      const o = org as any;
+      return {
+        id: o.id,
+        name: o.name,
+        type: o.type || 'Corporate',
+        industry: o.industry || '',
+        description: o.description || '',
+        website: o.website || '',
+        city: o.city || '',
+        country: o.country || '',
+        logoUrl: o.logoUrl || ''
+      };
+    });
+  }
+
+  /**
    * Create a new organization.
    */
   async createOrganization(

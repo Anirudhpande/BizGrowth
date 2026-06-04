@@ -16,6 +16,13 @@ const router = Router();
 router.get('/my', authenticate, orgsController.getMyOrganizations);
 
 /**
+ * @route   GET /api/organizations/user/:userId
+ * @desc    Get all organizations belonging to a specified user
+ * @access  Private (any authenticated user)
+ */
+router.get('/user/:userId', authenticate, orgsController.getUserOrganizations);
+
+/**
  * @route   GET /api/organizations/:id
  * @desc    Get organization by ID
  * @access  Public

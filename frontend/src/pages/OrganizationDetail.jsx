@@ -1,12 +1,32 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { api } from '../utils/api'
 
 export default function OrganizationDetail() {
   const { id } = useParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [organization, setOrganization] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true)
+      setError('')
+      const res = await api.delete(`/api/organizations/${id}`)
+      if (res.success) {
+        navigate('/organizations')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to delete the organization node')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   useEffect(() => {
     const fetchOrgDetail = async () => {
@@ -59,6 +79,10 @@ export default function OrganizationDetail() {
     )
   }
 
+  const isOwner = organization?.userId === user?.id
+  const isAdmin = user?.role === 'admin'
+  const canEdit = isOwner || isAdmin
+
   return (
     <div className="min-h-screen bg-surface px-margin-mobile md:px-margin-desktop py-12 relative z-10">
       <div className="max-w-[800px] mx-auto space-y-6 animate-fade-in">
@@ -71,6 +95,13 @@ export default function OrganizationDetail() {
 
         {/* Detail Panel */}
         <div className="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant/30 shadow-lg space-y-8">
+
+          {error && (
+            <div className="p-4 bg-red-500/10 text-error rounded-lg text-left text-body-md border border-red-500/20 flex items-start gap-3">
+              <span className="material-symbols-outlined text-[20px] shrink-0 mt-0.5">error</span>
+              <span>{error}</span>
+            </div>
+          )}
           
           {/* Node Branding Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-outline-variant/20 pb-6">
@@ -109,13 +140,48 @@ export default function OrganizationDetail() {
               </div>
             </div>
             
-            <Link
-              to={`/organizations/${organization.id}/edit`}
-              className="inline-flex items-center gap-2 border border-outline text-primary hover:text-on-primary bg-transparent hover:bg-primary font-label-md text-label-md px-6 py-2.5 rounded-full transition-all duration-300 scale-95 active:scale-90 font-semibold justify-center"
-            >
-              <span className="material-symbols-outlined text-[16px]">edit</span>
-              Edit Node
-            </Link>
+            {canEdit && (
+              <div className="flex items-center gap-3">
+                {deleteConfirm ? (
+                  <div className="flex items-center gap-2 bg-red-500/5 border border-red-500/20 rounded-xl p-2 animate-fade-in">
+                    <span className="font-label-md text-[11px] text-error font-semibold px-2">
+                      Confirm Node Deletion?
+                    </span>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="px-3 py-1.5 bg-error text-on-error font-label-md text-[11px] rounded-lg hover:bg-error/90 transition-all font-semibold"
+                    >
+                      {deleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(false)}
+                      disabled={deleting}
+                      className="px-3 py-1.5 border border-outline-variant text-primary font-label-md text-[11px] rounded-lg hover:bg-surface transition-all font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Link
+                      to={`/organizations/${organization.id}/edit`}
+                      className="inline-flex items-center gap-2 border border-outline text-primary hover:text-on-primary bg-transparent hover:bg-primary font-label-md text-label-md px-6 py-2.5 rounded-full transition-all duration-300 scale-95 active:scale-90 font-semibold justify-center"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                      Edit Node
+                    </Link>
+                    <button
+                      onClick={() => setDeleteConfirm(true)}
+                      className="inline-flex items-center gap-2 border border-red-500/20 text-error hover:text-on-error bg-transparent hover:bg-red-500/10 font-label-md text-label-md px-6 py-2.5 rounded-full transition-all duration-300 scale-95 active:scale-90 font-semibold justify-center"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      Delete Node
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Description Section */}

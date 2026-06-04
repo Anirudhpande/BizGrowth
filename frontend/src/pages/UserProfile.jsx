@@ -9,6 +9,9 @@ export default function UserProfile() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [orgs, setOrgs] = useState([])
+  const [orgsLoading, setOrgsLoading] = useState(true)
+  const [orgsError, setOrgsError] = useState('')
 
   const isSelf = id === currentUser?.id
 
@@ -31,6 +34,29 @@ export default function UserProfile() {
     }
 
     fetchUserProfile()
+  }, [id])
+
+  useEffect(() => {
+    if (!id) return
+
+    const fetchOrgs = async () => {
+      try {
+        setOrgsLoading(true)
+        setOrgsError('')
+        const res = await api.get(`/api/organizations/user/${id}`)
+        if (res.success && res.data) {
+          setOrgs(res.data)
+        } else {
+          setOrgs([])
+        }
+      } catch (err) {
+        setOrgsError(err.message || 'Failed to retrieve organizations list')
+      } finally {
+        setOrgsLoading(false)
+      }
+    }
+
+    fetchOrgs()
   }, [id])
 
   if (loading) {
@@ -239,6 +265,88 @@ export default function UserProfile() {
             </div>
           </div>
 
+        </div>
+
+        {/* Organizations Card List */}
+        <div className="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant/30 shadow-lg space-y-6">
+          <h2 className="font-headline-md text-headline-md text-primary font-semibold border-l-4 border-secondary pl-3">
+            Organizations
+          </h2>
+
+          {orgsLoading ? (
+            <div className="py-8 flex justify-center">
+              <span className="material-symbols-outlined animate-spin text-[32px] text-primary">sync</span>
+            </div>
+          ) : orgsError ? (
+            <div className="p-4 bg-red-500/10 text-error rounded-lg text-left text-body-md border border-red-500/20 flex items-start gap-3">
+              <span className="material-symbols-outlined text-[20px] shrink-0 mt-0.5">error</span>
+              <span>{orgsError}</span>
+            </div>
+          ) : orgs.length === 0 ? (
+            <div className="border border-dashed border-outline-variant/50 rounded-xl p-8 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-outline mx-auto">
+                <span className="material-symbols-outlined text-[28px]">corporate_fare</span>
+              </div>
+              <div className="space-y-1">
+                <p className="font-headline-md text-[16px] text-primary font-semibold">No Registered Organizations</p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm mx-auto">
+                  This user is not currently linked to any enterprise nodes.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {orgs.map((org) => {
+                const initial = org.name ? org.name[0].toUpperCase() : 'O'
+                const locationStr = [org.city, org.country].filter(Boolean).join(', ') || 'Location unmapped'
+
+                return (
+                  <Link
+                    key={org.id}
+                    to={`/organizations/${org.id}`}
+                    className="group bg-surface-container-lowest border border-outline-variant/30 hover:border-primary/45 rounded-xl p-5 shadow-sm hover:shadow transition-all flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center border border-outline-variant/30 text-primary shrink-0">
+                          {org.logoUrl ? (
+                            <img src={org.logoUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            <span className="font-headline-md text-[18px] font-bold text-primary">{initial}</span>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-headline-md text-[15px] leading-5 text-primary font-bold group-hover:text-secondary transition-colors line-clamp-1">
+                            {org.name}
+                          </h4>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                            {org.type && (
+                              <span className="font-label-md text-[8px] uppercase tracking-wider text-on-surface-variant bg-surface-container px-1.5 py-0.2 rounded border border-outline-variant/30">
+                                {org.type}
+                              </span>
+                            )}
+                            {org.industry && (
+                              <span className="font-label-md text-[8px] uppercase tracking-wider text-secondary bg-secondary/5 px-1.5 py-0.2 rounded border border-secondary/10">
+                                {org.industry}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 leading-relaxed">
+                        {org.description || 'No business description summary provided.'}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-outline-variant/10 flex items-center gap-1 font-body-sm text-[12px] text-outline">
+                      <span className="material-symbols-outlined text-[16px]">location_on</span>
+                      <span className="line-clamp-1">{locationStr}</span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
