@@ -74,6 +74,18 @@ export default function Navbar() {
           {user ? (
             <>
               <NavLink 
+                to="/discovery" 
+                className={({ isActive }) => 
+                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
+                    isActive 
+                      ? 'text-secondary font-bold border-secondary' 
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  }`
+                }
+              >
+                Discover
+              </NavLink>
+              <NavLink 
                 to="/organizations" 
                 className={({ isActive }) => 
                   `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
@@ -187,6 +199,19 @@ export default function Navbar() {
                   <span className="material-symbols-outlined text-[20px] text-primary">person</span>
                   Hi, <span className="font-bold text-primary">{user.name}</span>
                 </div>
+                <NavLink 
+                  to="/discovery" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => 
+                    `text-center font-label-md text-label-md py-3 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1.5 ${
+                      isActive 
+                        ? 'border-secondary text-secondary font-bold' 
+                        : 'border-outline text-primary hover:bg-surface-container-low'
+                    }`
+                  }
+                >
+                  Discover
+                </NavLink>
                 <NavLink 
                   to="/organizations" 
                   onClick={() => setIsMobileMenuOpen(false)}

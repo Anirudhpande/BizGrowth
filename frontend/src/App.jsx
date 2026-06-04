@@ -13,6 +13,8 @@ import MyOrganizations from './pages/MyOrganizations'
 import OrganizationDetail from './pages/OrganizationDetail'
 import OrganizationForm from './pages/OrganizationForm'
 import AdminDashboard from './pages/AdminDashboard'
+import Discovery from './pages/Discovery'
+import UserProfile from './pages/UserProfile'
 import './App.css'
 
 export default function App() {
@@ -36,6 +38,8 @@ export default function App() {
           {/* Protected Routes Infrastructure */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
+            <Route path="/discovery" element={<Discovery />} />
+            <Route path="/users/:id" element={<UserProfile />} />
             <Route path="/organizations" element={<MyOrganizations />} />
             <Route path="/organizations/new" element={<OrganizationForm />} />
             <Route path="/organizations/:id" element={<OrganizationDetail />} />

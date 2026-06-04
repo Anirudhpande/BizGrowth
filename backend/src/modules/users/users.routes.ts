@@ -52,6 +52,15 @@ router.patch('/:id', authenticate, authorize('admin'), usersController.adminUpda
  */
 router.delete('/:id', authenticate, authorize('admin'), usersController.deleteUser);
 
+// ---- Discovery Routes ----
+
+/**
+ * @route   GET /api/users/discover
+ * @desc    List sanitized users for discovery
+ * @access  Private (any authenticated user)
+ */
+router.get('/discover', authenticate, usersController.getDiscoveryUsers);
+
 // ---- Public Profile ----
 
 /**

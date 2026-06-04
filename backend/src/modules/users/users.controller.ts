@@ -124,6 +124,23 @@ class UsersController {
   }
 
   /**
+   * GET /api/users/discover
+   * List sanitized users for discovery
+   */
+  async getDiscoveryUsers(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const users = await usersService.getDiscoveryUsers();
+      res.status(200).json({ success: true, data: users });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * DELETE /api/users/:id
    * Admin delete a user
    */

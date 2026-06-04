@@ -168,6 +168,30 @@ class UsersService {
 
     await Users.deleteUser(targetUserId);
   }
+
+  // ----------------------------------------------------------
+  // Discovery: List sanitized users for discovery
+  // ----------------------------------------------------------
+
+  async getDiscoveryUsers(): Promise<any[]> {
+    const { users } = await Users.listUsers({ page: 1, limit: 1000 });
+    return users.map(u => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      role: u.role,
+      companyName: u.companyName,
+      industry: u.industry,
+      city: u.city,
+      country: u.country,
+      bio: u.bio,
+      avatarUrl: u.avatarUrl,
+      website: u.website,
+      linkedinUrl: u.linkedinUrl,
+      experienceYears: u.experienceYears,
+      createdAt: u.createdAt
+    }));
+  }
 }
 
 export default new UsersService();
