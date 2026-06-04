@@ -8,6 +8,11 @@ import rateLimit from 'express-rate-limit';
 import authRoutes from './modules/auth/auth.routes';
 import usersRoutes from './modules/users/users.routes';
 import organizationsRoutes from './modules/organizations/organizations.routes';
+import marketplaceRoutes from './modules/marketplace/marketplace.routes';
+import eventsRoutes from './modules/events/events.routes';
+import contentRoutes from './modules/content/content.routes';
+import consultantsRoutes from './modules/consultants/consultants.routes';
+import adminRoutes from './modules/admin/admin.routes';
 
 // Middleware imports
 import errorHandler from './middleware/errorHandler';
@@ -75,6 +80,11 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/organizations', organizationsRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/events', eventsRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/consultants', consultantsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {

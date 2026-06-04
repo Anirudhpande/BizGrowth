@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 
 const AuthContext = createContext(null);
@@ -8,8 +8,41 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Initial authentication verification check on application load
-  const verifyToken = async () => {
+  // ---- Token helpers ----
+  const saveTokens = (accessToken, refreshToken) => {
+    localStorage.setItem('token', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+  };
+
+  const clearTokens = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+  };
+
+  // ---- Refresh access token using the refresh token ----
+  const refreshAccessToken = useCallback(async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return false;
+
+    try {
+      const data = await api.post('/api/auth/refresh', { refreshToken });
+      if (data.accessToken) {
+        saveTokens(data.accessToken, data.refreshToken);
+        setUser(data.user);
+        setIsAuthenticated(true);
+        return true;
+      }
+    } catch (err) {
+      console.error('Token refresh failed:', err.message);
+      clearTokens();
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+    return false;
+  }, []);
+
+  // ---- Verify existing token on app load ----
+  const verifyToken = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       setUser(null);
@@ -24,31 +57,41 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         setIsAuthenticated(true);
       } else {
-        localStorage.removeItem('token');
+        clearTokens();
         setUser(null);
         setIsAuthenticated(false);
       }
     } catch (err) {
-      console.error('Initial token verification failed:', err.message);
-      // Clean up invalid or expired token
-      localStorage.removeItem('token');
-      setUser(null);
-      setIsAuthenticated(false);
+      // Access token may be expired — try refreshing
+      if (err.status === 401) {
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+          clearTokens();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        console.error('Token verification failed:', err.message);
+        clearTokens();
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [refreshAccessToken]);
 
   useEffect(() => {
     verifyToken();
-  }, []);
+  }, [verifyToken]);
 
+  // ---- Login ----
   const login = async (email, password) => {
     setLoading(true);
     try {
       const data = await api.post('/api/auth/login', { email, password });
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+      if (data.accessToken) {
+        saveTokens(data.accessToken, data.refreshToken);
         setUser(data.user);
         setIsAuthenticated(true);
       }
@@ -60,12 +103,13 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // ---- Register ----
   const register = async (name, email, password, role) => {
     setLoading(true);
     try {
       const data = await api.post('/api/auth/register', { name, email, password, role });
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+      if (data.accessToken) {
+        saveTokens(data.accessToken, data.refreshToken);
         setUser(data.user);
         setIsAuthenticated(true);
       }
@@ -77,8 +121,9 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // ---- Logout ----
   const logout = () => {
-    localStorage.removeItem('token');
+    clearTokens();
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -92,7 +137,8 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        verifyToken // Exposed in case a manual refetch is ever needed
+        refreshAccessToken,
+        verifyToken,
       }}
     >
       {children}
