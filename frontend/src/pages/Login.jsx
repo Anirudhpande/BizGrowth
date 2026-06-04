@@ -1,41 +1,23 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { login, loading } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Invalid email or password')
-      }
-
-      // Save token and navigate
-      localStorage.setItem('token', data.token)
-      
-      // Dispatch storage event so Navbar detects login immediately in the same window
-      window.dispatchEvent(new Event('storage'))
-
+      await login(email, password)
       navigate('/')
     } catch (err) {
       setError(err.message)
-    } finally {
-      setLoading(false)
     }
   }
 

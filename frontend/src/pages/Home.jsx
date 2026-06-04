@@ -176,7 +176,7 @@ export default function Home() {
         {/* Service Cards Container */}
         <div
           ref={servicesRef}
-          className="flex gap-6 overflow-x-auto pb-12 px-margin-mobile md:px-margin-desktop snap-x snap-mandatory scrollbar-hide"
+          className="max-w-[1280px] mx-auto flex gap-6 overflow-x-auto pb-12 px-margin-mobile md:px-margin-desktop snap-x snap-mandatory scrollbar-hide"
           style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
         >
           {/* Service Card 1 */}
