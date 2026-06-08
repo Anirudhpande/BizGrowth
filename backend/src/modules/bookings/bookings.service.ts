@@ -1,4 +1,12 @@
-import { Booking, IBooking } from './bookings.model';
+import { createClient } from '@supabase/supabase-js';
+import { IBooking } from './bookings.model';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
+
+const BOOKINGS_TABLE = 'bookings';
 
 export class BookingsService {
   /**
@@ -6,8 +14,14 @@ export class BookingsService {
    */
   async createBooking(bookingData: Partial<IBooking>): Promise<IBooking> {
     try {
-      const booking = new Booking(bookingData);
-      return await booking.save();
+      const { data, error } = await supabase
+        .from(BOOKINGS_TABLE)
+        .insert([bookingData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     } catch (error) {
       throw new Error(`Failed to create booking: ${error}`);
     }
@@ -17,7 +31,19 @@ export class BookingsService {
    * Get booking by ID
    */
   async getBookingById(bookingId: string): Promise<IBooking | null> {
-    return await Booking.findById(bookingId);
+    try {
+      const { data, error } = await supabase
+        .from(BOOKINGS_TABLE)
+        .select('*')
+        .eq('id', bookingId)
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch booking: ${error}`);
+      return null;
+    }
   }
 
   /**
@@ -27,22 +53,48 @@ export class BookingsService {
     consultantId: string,
     status?: string
   ): Promise<IBooking[]> {
-    const query: any = { consultantId };
-    if (status) {
-      query.status = status;
+    try {
+      let query = supabase
+        .from(BOOKINGS_TABLE)
+        .select('*')
+        .eq('consultant_id', consultantId)
+        .order('scheduled_at', { ascending: false });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error(`Failed to fetch bookings: ${error}`);
+      return [];
     }
-    return await Booking.find(query).sort({ scheduledAt: -1 });
   }
 
   /**
    * Get all bookings for a client
    */
   async getClientBookings(clientId: string, status?: string): Promise<IBooking[]> {
-    const query: any = { clientId };
-    if (status) {
-      query.status = status;
+    try {
+      let query = supabase
+        .from(BOOKINGS_TABLE)
+        .select('*')
+        .eq('client_id', clientId)
+        .order('scheduled_at', { ascending: false });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error(`Failed to fetch bookings: ${error}`);
+      return [];
     }
-    return await Booking.find(query).sort({ scheduledAt: -1 });
   }
 
   /**
@@ -52,22 +104,27 @@ export class BookingsService {
     bookingId: string,
     status: string
   ): Promise<IBooking | null> {
-    return await Booking.findByIdAndUpdate(
-      bookingId,
-      { status },
-      { new: true }
-    );
+    try {
+      const { data, error } = await supabase
+        .from(BOOKINGS_TABLE)
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to update booking: ${error}`);
+      return null;
+    }
   }
 
   /**
    * Cancel booking
    */
   async cancelBooking(bookingId: string): Promise<IBooking | null> {
-    return await Booking.findByIdAndUpdate(
-      bookingId,
-      { status: 'cancelled' },
-      { new: true }
-    );
+    return this.updateBookingStatus(bookingId, 'cancelled');
   }
 
   /**
@@ -78,21 +135,26 @@ export class BookingsService {
     scheduledAt: Date,
     durationMinutes: number
   ): Promise<boolean> {
-    const endTime = new Date(scheduledAt.getTime() + durationMinutes * 60000);
+    try {
+      const endTime = new Date(
+        scheduledAt.getTime() + durationMinutes * 60000
+      ).toISOString();
+      const startTime = scheduledAt.toISOString();
 
-    const conflict = await Booking.findOne({
-      consultantId,
-      status: { $in: ['pending', 'confirmed', 'completed'] },
-      scheduledAt: { $lt: endTime },
-      $expr: {
-        $gt: [
-          { $add: ['$scheduledAt', { $multiply: ['$durationMinutes', 60000] }] },
-          scheduledAt,
-        ],
-      },
-    });
+      const { data, error } = await supabase
+        .from(BOOKINGS_TABLE)
+        .select('*')
+        .eq('consultant_id', consultantId)
+        .in('status', ['pending', 'confirmed', 'completed'])
+        .lt('scheduled_at', endTime)
+        .gte('scheduled_at', startTime);
 
-    return !conflict;
+      if (error) throw error;
+      return !data || data.length === 0;
+    } catch (error) {
+      console.error(`Failed to check availability: ${error}`);
+      return false;
+    }
   }
 
   /**
@@ -103,18 +165,38 @@ export class BookingsService {
     startDate: Date,
     endDate: Date
   ): Promise<IBooking[]> {
-    return await Booking.find({
-      consultantId,
-      scheduledAt: { $gte: startDate, $lte: endDate },
-      status: { $ne: 'cancelled' },
-    });
+    try {
+      const { data, error } = await supabase
+        .from(BOOKINGS_TABLE)
+        .select('*')
+        .eq('consultant_id', consultantId)
+        .gte('scheduled_at', startDate.toISOString())
+        .lte('scheduled_at', endDate.toISOString())
+        .neq('status', 'cancelled');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error(`Failed to fetch bookings in range: ${error}`);
+      return [];
+    }
   }
 
   /**
    * Delete booking
    */
   async deleteBooking(bookingId: string): Promise<boolean> {
-    const result = await Booking.findByIdAndDelete(bookingId);
-    return !!result;
+    try {
+      const { error } = await supabase
+        .from(BOOKINGS_TABLE)
+        .delete()
+        .eq('id', bookingId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete booking: ${error}`);
+      return false;
+    }
   }
 }
