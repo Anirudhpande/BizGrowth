@@ -1,3 +1,19 @@
+import { 
+  bookingsRouter, 
+  reviewsRouter, 
+  categoriesRouter, 
+  paymentsRouter, 
+  notificationsRouter, 
+  availabilityRouter 
+} from './modules';
+
+app.use('/api/bookings', bookingsRouter);
+app.use('/api/reviews', reviewsRouter);
+app.use('/api/categories', categoriesRouter);
+app.use('/api/payments', paymentsRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/availability', availabilityRouter);
+
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
