@@ -1,4 +1,12 @@
-import { Notification, INotification } from './notifications.model';
+import { createClient } from '@supabase/supabase-js';
+import { INotification } from './notifications.model';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
+
+const NOTIFICATIONS_TABLE = 'notifications';
 
 export class NotificationsService {
   /**
@@ -15,18 +23,24 @@ export class NotificationsService {
     relatedModel?: string
   ): Promise<INotification> {
     try {
-      const notification = new Notification({
-        userId,
-        type,
-        title,
-        message,
-        channels,
-        data,
-        relatedId,
-        relatedModel,
-      });
+      const { data: notification, error } = await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .insert([
+          {
+            user_id: userId,
+            type,
+            title,
+            message,
+            channels,
+            data,
+            related_id: relatedId,
+            related_model: relatedModel,
+          },
+        ])
+        .select()
+        .single();
 
-      await notification.save();
+      if (error) throw error;
 
       // Send via channels
       await this.sendViaChannels(notification);
@@ -60,10 +74,10 @@ export class NotificationsService {
       }
 
       // Update sent timestamp
-      await Notification.findByIdAndUpdate(
-        notification._id,
-        { sentAt: new Date() }
-      );
+      await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .update({ sent_at: new Date().toISOString() })
+        .eq('id', notification.id);
     } catch (error) {
       console.error(`Failed to send via channels: ${error}`);
     }
@@ -74,7 +88,7 @@ export class NotificationsService {
    */
   async sendEmail(notification: INotification): Promise<void> {
     // TODO: Integrate with email service (SendGrid, Mailgun, etc.)
-    console.log(`Email sent to user ${notification.userId}: ${notification.title}`);
+    console.log(`Email sent to user ${notification.user_id}: ${notification.title}`);
   }
 
   /**
@@ -82,7 +96,7 @@ export class NotificationsService {
    */
   async sendSMS(notification: INotification): Promise<void> {
     // TODO: Integrate with SMS service (Twilio, etc.)
-    console.log(`SMS sent to user ${notification.userId}: ${notification.title}`);
+    console.log(`SMS sent to user ${notification.user_id}: ${notification.title}`);
   }
 
   /**
@@ -90,7 +104,7 @@ export class NotificationsService {
    */
   async sendPushNotification(notification: INotification): Promise<void> {
     // TODO: Integrate with push service (Firebase Cloud Messaging, etc.)
-    console.log(`Push notification sent to user ${notification.userId}: ${notification.title}`);
+    console.log(`Push notification sent to user ${notification.user_id}: ${notification.title}`);
   }
 
   /**
@@ -102,65 +116,133 @@ export class NotificationsService {
     limit: number = 10,
     skip: number = 0
   ): Promise<{ notifications: INotification[]; total: number }> {
-    const query: any = { userId };
-    if (read !== undefined) {
-      query.read = read;
+    try {
+      // Get total count
+      let countQuery = supabase
+        .from(NOTIFICATIONS_TABLE)
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (read !== undefined) {
+        countQuery = countQuery.eq('read', read);
+      }
+
+      const { count: total } = await countQuery;
+
+      // Get paginated data
+      let query = supabase
+        .from(NOTIFICATIONS_TABLE)
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .range(skip, skip + limit - 1);
+
+      if (read !== undefined) {
+        query = query.eq('read', read);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return { notifications: data || [], total: total || 0 };
+    } catch (error) {
+      console.error(`Failed to fetch notifications: ${error}`);
+      return { notifications: [], total: 0 };
     }
-
-    const notifications = await Notification.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
-
-    const total = await Notification.countDocuments(query);
-
-    return { notifications, total };
   }
 
   /**
    * Mark notification as read
    */
   async markAsRead(notificationId: string): Promise<INotification | null> {
-    return await Notification.findByIdAndUpdate(
-      notificationId,
-      { read: true },
-      { new: true }
-    );
+    try {
+      const { data, error } = await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .update({ read: true, updated_at: new Date().toISOString() })
+        .eq('id', notificationId)
+        .select()
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to mark notification as read: ${error}`);
+      return null;
+    }
   }
 
   /**
    * Mark all notifications as read
    */
   async markAllAsRead(userId: string): Promise<any> {
-    return await Notification.updateMany(
-      { userId, read: false },
-      { read: true }
-    );
+    try {
+      const { error } = await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .update({ read: true, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('read', false);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to mark all as read: ${error}`);
+      return { success: false };
+    }
   }
 
   /**
    * Get unread count
    */
   async getUnreadCount(userId: string): Promise<number> {
-    return await Notification.countDocuments({
-      userId,
-      read: false,
-    });
+    try {
+      const { count, error } = await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('read', false);
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error(`Failed to get unread count: ${error}`);
+      return 0;
+    }
   }
 
   /**
    * Delete notification
    */
   async deleteNotification(notificationId: string): Promise<boolean> {
-    const result = await Notification.findByIdAndDelete(notificationId);
-    return !!result;
+    try {
+      const { error } = await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete notification: ${error}`);
+      return false;
+    }
   }
 
   /**
    * Delete all notifications for user
    */
   async deleteAllNotifications(userId: string): Promise<any> {
-    return await Notification.deleteMany({ userId });
+    try {
+      const { error } = await supabase
+        .from(NOTIFICATIONS_TABLE)
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error(`Failed to delete all notifications: ${error}`);
+      return { success: false };
+    }
   }
 
   /**
