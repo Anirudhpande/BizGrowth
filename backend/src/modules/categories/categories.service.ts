@@ -1,5 +1,14 @@
-import { Category, ICategory } from './categories.model';
-import { ConsultantCategory, IConsultantCategory } from './consultant-categories.model';
+import { createClient } from '@supabase/supabase-js';
+import { ICategory } from './categories.model';
+import { IConsultantCategory } from './consultant-categories.model';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
+
+const CATEGORIES_TABLE = 'categories';
+const CONSULTANT_CATEGORIES_TABLE = 'consultant_categories';
 
 export class CategoriesService {
   /**
@@ -7,8 +16,14 @@ export class CategoriesService {
    */
   async createCategory(categoryData: Partial<ICategory>): Promise<ICategory> {
     try {
-      const category = new Category(categoryData);
-      return await category.save();
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .insert([categoryData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     } catch (error) {
       throw new Error(`Failed to create category: ${error}`);
     }
@@ -18,14 +33,38 @@ export class CategoriesService {
    * Get category by ID
    */
   async getCategoryById(categoryId: string): Promise<ICategory | null> {
-    return await Category.findById(categoryId);
+    try {
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*')
+        .eq('id', categoryId)
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch category: ${error}`);
+      return null;
+    }
   }
 
   /**
    * Get category by name
    */
   async getCategoryByName(name: string): Promise<ICategory | null> {
-    return await Category.findOne({ name });
+    try {
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*')
+        .eq('name', name)
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch category: ${error}`);
+      return null;
+    }
   }
 
   /**
@@ -35,14 +74,25 @@ export class CategoriesService {
     limit: number = 50,
     skip: number = 0
   ): Promise<{ categories: ICategory[]; total: number }> {
-    const categories = await Category.find()
-      .sort({ consultantCount: -1 })
-      .limit(limit)
-      .skip(skip);
+    try {
+      // Get total count
+      const { count: total } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*', { count: 'exact', head: true });
 
-    const total = await Category.countDocuments();
+      // Get paginated data
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*')
+        .order('consultant_count', { ascending: false })
+        .range(skip, skip + limit - 1);
 
-    return { categories, total };
+      if (error) throw error;
+      return { categories: data || [], total: total || 0 };
+    } catch (error) {
+      console.error(`Failed to fetch categories: ${error}`);
+      return { categories: [], total: 0 };
+    }
   }
 
   /**
@@ -52,18 +102,45 @@ export class CategoriesService {
     categoryId: string,
     updateData: Partial<ICategory>
   ): Promise<ICategory | null> {
-    return await Category.findByIdAndUpdate(categoryId, updateData, { new: true });
+    try {
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .update({ ...updateData, updated_at: new Date().toISOString() })
+        .eq('id', categoryId)
+        .select()
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to update category: ${error}`);
+      return null;
+    }
   }
 
   /**
    * Delete category
    */
   async deleteCategory(categoryId: string): Promise<boolean> {
-    // Remove all consultant-category mappings
-    await ConsultantCategory.deleteMany({ categoryId });
-    // Delete the category
-    const result = await Category.findByIdAndDelete(categoryId);
-    return !!result;
+    try {
+      // Remove all consultant-category mappings
+      await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .delete()
+        .eq('category_id', categoryId);
+
+      // Delete the category
+      const { error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete category: ${error}`);
+      return false;
+    }
   }
 
   /**
@@ -75,28 +152,30 @@ export class CategoriesService {
   ): Promise<IConsultantCategory> {
     try {
       // Check if consultant-category pair already exists
-      const existing = await ConsultantCategory.findOne({
-        consultantId,
-        categoryId,
-      });
+      const { data: existing } = await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .select('*')
+        .eq('consultant_id', consultantId)
+        .eq('category_id', categoryId)
+        .single();
 
       if (existing) {
         return existing;
       }
 
-      const mapping = new ConsultantCategory({
-        consultantId,
-        categoryId,
-      });
+      // Insert new mapping
+      const { data, error } = await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .insert([{ consultant_id: consultantId, category_id: categoryId }])
+        .select()
+        .single();
+
+      if (error) throw error;
 
       // Increment consultant count in category
-      await Category.findByIdAndUpdate(
-        categoryId,
-        { $inc: { consultantCount: 1 } },
-        { new: true }
-      );
+      await supabase.rpc('increment_consultant_count', { category_id: categoryId });
 
-      return await mapping.save();
+      return data;
     } catch (error) {
       throw new Error(`Failed to add consultant to category: ${error}`);
     }
@@ -109,31 +188,52 @@ export class CategoriesService {
     consultantId: string,
     categoryId: string
   ): Promise<boolean> {
-    const result = await ConsultantCategory.deleteOne({
-      consultantId,
-      categoryId,
-    });
+    try {
+      const { error } = await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .delete()
+        .eq('consultant_id', consultantId)
+        .eq('category_id', categoryId);
 
-    if (result.deletedCount > 0) {
+      if (error) throw error;
+
       // Decrement consultant count in category
-      await Category.findByIdAndUpdate(
-        categoryId,
-        { $inc: { consultantCount: -1 } },
-        { new: true }
-      );
-      return true;
-    }
+      await supabase.rpc('decrement_consultant_count', { category_id: categoryId });
 
-    return false;
+      return true;
+    } catch (error) {
+      console.error(`Failed to remove consultant from category: ${error}`);
+      return false;
+    }
   }
 
   /**
    * Get all categories for a consultant
    */
   async getConsultantCategories(consultantId: string): Promise<ICategory[]> {
-    const mappings = await ConsultantCategory.find({ consultantId });
-    const categoryIds = mappings.map((m) => m.categoryId);
-    return await Category.find({ _id: { $in: categoryIds } });
+    try {
+      const { data: mappings, error: mappingError } = await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .select('category_id')
+        .eq('consultant_id', consultantId);
+
+      if (mappingError) throw mappingError;
+
+      const categoryIds = mappings?.map((m) => m.category_id) || [];
+
+      if (categoryIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*')
+        .in('id', categoryIds);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error(`Failed to fetch consultant categories: ${error}`);
+      return [];
+    }
   }
 
   /**
@@ -144,23 +244,47 @@ export class CategoriesService {
     limit: number = 50,
     skip: number = 0
   ): Promise<{ consultants: string[]; total: number }> {
-    const mappings = await ConsultantCategory.find({ categoryId })
-      .limit(limit)
-      .skip(skip);
+    try {
+      // Get total count
+      const { count: total } = await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .select('*', { count: 'exact', head: true })
+        .eq('category_id', categoryId);
 
-    const consultants = mappings.map((m) => m.consultantId);
-    const total = await ConsultantCategory.countDocuments({ categoryId });
+      // Get paginated data
+      const { data, error } = await supabase
+        .from(CONSULTANT_CATEGORIES_TABLE)
+        .select('consultant_id')
+        .eq('category_id', categoryId)
+        .range(skip, skip + limit - 1);
 
-    return { consultants, total };
+      if (error) throw error;
+
+      const consultants = data?.map((m) => m.consultant_id) || [];
+      return { consultants, total: total || 0 };
+    } catch (error) {
+      console.error(`Failed to fetch consultants in category: ${error}`);
+      return { consultants: [], total: 0 };
+    }
   }
 
   /**
    * Search categories by name
    */
   async searchCategories(searchTerm: string): Promise<ICategory[]> {
-    return await Category.find({
-      name: { $regex: searchTerm, $options: 'i' },
-    }).sort({ consultantCount: -1 });
+    try {
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*')
+        .ilike('name', `%${searchTerm}%`)
+        .order('consultant_count', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error(`Failed to search categories: ${error}`);
+      return [];
+    }
   }
 
   /**
@@ -188,8 +312,18 @@ export class CategoriesService {
    * Get trending categories
    */
   async getTrendingCategories(limit: number = 10): Promise<ICategory[]> {
-    return await Category.find()
-      .sort({ consultantCount: -1 })
-      .limit(limit);
+    try {
+      const { data, error } = await supabase
+        .from(CATEGORIES_TABLE)
+        .select('*')
+        .order('consultant_count', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error(`Failed to fetch trending categories: ${error}`);
+      return [];
+    }
   }
 }
