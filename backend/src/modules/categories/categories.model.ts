@@ -1,43 +1,27 @@
-import { Schema, model } from 'mongoose';
-
-interface ICategory {
-  _id?: string;
+export interface ICategory {
+  id?: string;
   name: string;
   description?: string;
   icon?: string;
   color?: string;
-  consultantCount?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  consultant_count?: number;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-const categorySchema = new Schema<ICategory>(
-  {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      index: true,
-    },
-    description: {
-      type: String,
-      maxlength: 500,
-    },
-    icon: {
-      type: String,
-    },
-    color: {
-      type: String,
-      default: '#3B82F6',
-    },
-    consultantCount: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { timestamps: true }
-);
+// SQL table structure (for reference)
+export const CATEGORIES_TABLE = 'categories';
 
-export const Category = model<ICategory>('Category', categorySchema);
-export type { ICategory };
+export const categoriesTableSchema = `
+  CREATE TABLE IF NOT EXISTS ${CATEGORIES_TABLE} (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(500),
+    icon VARCHAR(255),
+    color VARCHAR(7) DEFAULT '#3B82F6',
+    consultant_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+  )
+`;
