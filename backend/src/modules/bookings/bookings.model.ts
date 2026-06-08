@@ -1,55 +1,33 @@
-import { Schema, model } from 'mongoose';
-
-interface IBooking {
-  _id?: string;
-  consultantId: string;
-  clientId: string;
-  scheduledAt: Date;
-  durationMinutes: number;
+export interface IBooking {
+  id?: string;
+  consultant_id: string;
+  client_id: string;
+  scheduled_at: Date;
+  duration_minutes: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
-  meetingLink?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  meeting_link?: string;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-const bookingSchema = new Schema<IBooking>(
-  {
-    consultantId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    clientId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    scheduledAt: {
-      type: Date,
-      required: true,
-    },
-    durationMinutes: {
-      type: Number,
-      default: 60,
-      min: 15,
-      max: 480,
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'confirmed', 'completed', 'cancelled'],
-      default: 'pending',
-    },
-    notes: {
-      type: String,
-      maxlength: 1000,
-    },
-    meetingLink: {
-      type: String,
-    },
-  },
-  { timestamps: true }
-);
+// SQL table structure (for reference)
+export const BOOKINGS_TABLE = 'bookings';
 
-export const Booking = model<IBooking>('Booking', bookingSchema);
-export type { IBooking };
+export const bookingsTableSchema = `
+  CREATE TABLE IF NOT EXISTS ${BOOKINGS_TABLE} (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consultant_id UUID NOT NULL REFERENCES users(id),
+    client_id UUID NOT NULL REFERENCES users(id),
+    scheduled_at TIMESTAMP NOT NULL,
+    duration_minutes INTEGER DEFAULT 60 CHECK (duration_minutes BETWEEN 15 AND 480),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+    notes TEXT,
+    meeting_link VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_consultant_id (consultant_id),
+    INDEX idx_client_id (client_id),
+    INDEX idx_status (status)
+  )
+`;
