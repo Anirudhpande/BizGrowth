@@ -1,26 +1,10 @@
-import { 
-  bookingsRouter, 
-  reviewsRouter, 
-  categoriesRouter, 
-  paymentsRouter, 
-  notificationsRouter, 
-  availabilityRouter 
-} from './modules';
-
-app.use('/api/bookings', bookingsRouter);
-app.use('/api/reviews', reviewsRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/payments', paymentsRouter);
-app.use('/api/notifications', notificationsRouter);
-app.use('/api/availability', availabilityRouter);
-
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
-// Route imports
+// Route imports - Phase 1
 import authRoutes from './modules/auth/auth.routes';
 import usersRoutes from './modules/users/users.routes';
 import organizationsRoutes from './modules/organizations/organizations.routes';
@@ -29,6 +13,16 @@ import eventsRoutes from './modules/events/events.routes';
 import contentRoutes from './modules/content/content.routes';
 import consultantsRoutes from './modules/consultants/consultants.routes';
 import adminRoutes from './modules/admin/admin.routes';
+
+// Route imports - Phase 2 & 3
+import {
+  bookingsRouter,
+  reviewsRouter,
+  categoriesRouter,
+  paymentsRouter,
+  notificationsRouter,
+  availabilityRouter,
+} from './modules';
 
 // Middleware imports
 import errorHandler from './middleware/errorHandler';
@@ -93,6 +87,7 @@ if (process.env.NODE_ENV === 'development') {
 // API Routes
 // ============================================================
 
+// Phase 1 Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/organizations', organizationsRoutes);
@@ -101,6 +96,14 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/consultants', consultantsRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Phase 2 & 3 Routes (NOW MOUNTED)
+app.use('/api/bookings', bookingsRouter);
+app.use('/api/reviews', reviewsRouter);
+app.use('/api/categories', categoriesRouter);
+app.use('/api/payments', paymentsRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/availability', availabilityRouter);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {
