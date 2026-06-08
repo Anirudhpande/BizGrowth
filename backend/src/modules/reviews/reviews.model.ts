@@ -1,58 +1,33 @@
-import { Schema, model } from 'mongoose';
-
-interface IReview {
-  _id?: string;
-  bookingId: string;
-  consultantId: string;
-  clientId: string;
+export interface IReview {
+  id?: string;
+  booking_id: string;
+  consultant_id: string;
+  client_id: string;
   rating: number; // 1-5
   title?: string;
   comment: string;
   helpful?: number; // count of helpful votes
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-const reviewSchema = new Schema<IReview>(
-  {
-    bookingId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-    consultantId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    clientId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5,
-    },
-    title: {
-      type: String,
-      maxlength: 200,
-    },
-    comment: {
-      type: String,
-      required: true,
-      maxlength: 2000,
-    },
-    helpful: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { timestamps: true }
-);
+// SQL table structure (for reference)
+export const REVIEWS_TABLE = 'reviews';
 
-export const Review = model<IReview>('Review', reviewSchema);
-export type { IReview };
+export const reviewsTableSchema = `
+  CREATE TABLE IF NOT EXISTS ${REVIEWS_TABLE} (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID NOT NULL UNIQUE REFERENCES bookings(id),
+    consultant_id UUID NOT NULL REFERENCES users(id),
+    client_id UUID NOT NULL REFERENCES users(id),
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    title VARCHAR(200),
+    comment TEXT NOT NULL CHECK (LENGTH(comment) <= 2000),
+    helpful INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_booking_id (booking_id),
+    INDEX idx_consultant_id (consultant_id),
+    INDEX idx_client_id (client_id)
+  )
+`;
