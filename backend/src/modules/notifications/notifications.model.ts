@@ -1,68 +1,39 @@
-import { Schema, model } from 'mongoose';
-
-interface INotification {
-  _id?: string;
-  userId: string;
+export interface INotification {
+  id?: string;
+  user_id: string;
   type: 'booking' | 'review' | 'payment' | 'reminder' | 'system';
   title: string;
   message: string;
   data?: any;
   read: boolean;
   channels: ('email' | 'sms' | 'push' | 'in-app')[];
-  relatedId?: string;
-  relatedModel?: string;
-  sentAt?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
+  related_id?: string;
+  related_model?: string;
+  sent_at?: Date;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-const notificationSchema = new Schema<INotification>(
-  {
-    userId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    type: {
-      type: String,
-      enum: ['booking', 'review', 'payment', 'reminder', 'system'],
-      required: true,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
-    message: {
-      type: String,
-      required: true,
-    },
-    data: {
-      type: Schema.Types.Mixed,
-    },
-    read: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-    channels: {
-      type: [String],
-      enum: ['email', 'sms', 'push', 'in-app'],
-      default: ['in-app'],
-    },
-    relatedId: {
-      type: String,
-      index: true,
-    },
-    relatedModel: {
-      type: String,
-      enum: ['Booking', 'Review', 'Payment'],
-    },
-    sentAt: {
-      type: Date,
-    },
-  },
-  { timestamps: true }
-);
+// SQL table structure (for reference)
+export const NOTIFICATIONS_TABLE = 'notifications';
 
-export const Notification = model<INotification>('Notification', notificationSchema);
-export type { INotification };
+export const notificationsTableSchema = `
+  CREATE TABLE IF NOT EXISTS ${NOTIFICATIONS_TABLE} (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    type VARCHAR(20) NOT NULL CHECK (type IN ('booking', 'review', 'payment', 'reminder', 'system')),
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    data JSONB,
+    read BOOLEAN DEFAULT FALSE,
+    channels TEXT[] DEFAULT ARRAY['in-app']::TEXT[],
+    related_id UUID,
+    related_model VARCHAR(50) CHECK (related_model IN ('Booking', 'Review', 'Payment')),
+    sent_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_read (read),
+    INDEX idx_related_id (related_id)
+  )
+`;
