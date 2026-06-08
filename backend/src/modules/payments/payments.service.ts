@@ -1,11 +1,19 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import { Payment, IPayment } from './payments.model';
+import { createClient } from '@supabase/supabase-js';
+import { IPayment } from './payments.model';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
+);
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || '',
   key_secret: process.env.RAZORPAY_KEY_SECRET || '',
 });
+
+const PAYMENTS_TABLE = 'payments';
 
 export class PaymentsService {
   /**
@@ -33,17 +41,19 @@ export class PaymentsService {
       const order = await razorpay.orders.create(options);
 
       // Save payment record
-      const payment = new Payment({
-        bookingId,
-        consultantId,
-        clientId,
-        amount,
-        currency,
-        razorpayOrderId: order.id,
-        status: 'pending',
-      });
+      const { error } = await supabase.from(PAYMENTS_TABLE).insert([
+        {
+          booking_id: bookingId,
+          consultant_id: consultantId,
+          client_id: clientId,
+          amount,
+          currency,
+          razorpay_order_id: order.id,
+          status: 'pending',
+        },
+      ]);
 
-      await payment.save();
+      if (error) throw error;
       return order;
     } catch (error) {
       throw new Error(`Failed to create order: ${error}`);
@@ -77,18 +87,21 @@ export class PaymentsService {
       const { order_id, id, method, status, error_reason } = paymentData;
 
       // Find and update payment
-      const payment = await Payment.findOneAndUpdate(
-        { razorpayOrderId: order_id },
-        {
-          razorpayPaymentId: id,
-          paymentMethod: method,
+      const { data, error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .update({
+          razorpay_payment_id: id,
+          payment_method: method,
           status: status === 'captured' ? 'completed' : 'failed',
-          errorMessage: error_reason,
-        },
-        { new: true }
-      );
+          error_message: error_reason,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('razorpay_order_id', order_id)
+        .select()
+        .single();
 
-      return payment;
+      if (error) return null;
+      return data;
     } catch (error) {
       throw new Error(`Failed to handle webhook: ${error}`);
     }
@@ -98,14 +111,38 @@ export class PaymentsService {
    * Get payment by ID
    */
   async getPaymentById(paymentId: string): Promise<IPayment | null> {
-    return await Payment.findById(paymentId);
+    try {
+      const { data, error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .select('*')
+        .eq('id', paymentId)
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch payment: ${error}`);
+      return null;
+    }
   }
 
   /**
    * Get payment by Razorpay order ID
    */
   async getPaymentByOrderId(razorpayOrderId: string): Promise<IPayment | null> {
-    return await Payment.findOne({ razorpayOrderId });
+    try {
+      const { data, error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .select('*')
+        .eq('razorpay_order_id', razorpayOrderId)
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch payment: ${error}`);
+      return null;
+    }
   }
 
   /**
@@ -117,40 +154,71 @@ export class PaymentsService {
     limit: number = 10,
     skip: number = 0
   ): Promise<{ payments: IPayment[]; total: number }> {
-    const query: any = { consultantId };
-    if (status) {
-      query.status = status;
+    try {
+      // Get total count
+      let countQuery = supabase
+        .from(PAYMENTS_TABLE)
+        .select('*', { count: 'exact', head: true })
+        .eq('consultant_id', consultantId);
+
+      if (status) {
+        countQuery = countQuery.eq('status', status);
+      }
+
+      const { count: total } = await countQuery;
+
+      // Get paginated data
+      let query = supabase
+        .from(PAYMENTS_TABLE)
+        .select('*')
+        .eq('consultant_id', consultantId)
+        .order('created_at', { ascending: false })
+        .range(skip, skip + limit - 1);
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return { payments: data || [], total: total || 0 };
+    } catch (error) {
+      console.error(`Failed to fetch payments: ${error}`);
+      return { payments: [], total: 0 };
     }
-
-    const payments = await Payment.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
-
-    const total = await Payment.countDocuments(query);
-
-    return { payments, total };
   }
 
   /**
    * Get payment statistics
    */
   async getPaymentStats(consultantId: string): Promise<any> {
-    const stats = await Payment.aggregate([
-      { $match: { consultantId, status: 'completed' } },
-      {
-        $group: {
-          _id: null,
-          totalEarnings: { $sum: '$amount' },
-          totalPayments: { $sum: 1 },
-          avgAmount: { $avg: '$amount' },
-        },
-      },
-    ]);
+    try {
+      const { data, error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .select('amount')
+        .eq('consultant_id', consultantId)
+        .eq('status', 'completed');
 
-    return stats.length > 0
-      ? stats[0]
-      : { totalEarnings: 0, totalPayments: 0, avgAmount: 0 };
+      if (error) throw error;
+
+      const payments = data || [];
+      if (payments.length === 0) {
+        return { totalEarnings: 0, totalPayments: 0, avgAmount: 0 };
+      }
+
+      const totalEarnings = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const avgAmount = totalEarnings / payments.length;
+
+      return {
+        totalEarnings,
+        totalPayments: payments.length,
+        avgAmount: Math.round(avgAmount * 100) / 100,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch payment stats: ${error}`);
+      return { totalEarnings: 0, totalPayments: 0, avgAmount: 0 };
+    }
   }
 
   /**
@@ -162,9 +230,9 @@ export class PaymentsService {
     refundReason?: string
   ): Promise<any> {
     try {
-      const payment = await Payment.findById(paymentId);
+      const payment = await this.getPaymentById(paymentId);
 
-      if (!payment || !payment.razorpayPaymentId) {
+      if (!payment || !payment.razorpay_payment_id) {
         throw new Error('Payment not found or not completed');
       }
 
@@ -176,21 +244,22 @@ export class PaymentsService {
       };
 
       const refund = await razorpay.payments.refund(
-        payment.razorpayPaymentId,
+        payment.razorpay_payment_id,
         refundOptions
       );
 
       // Update payment status
-      await Payment.findByIdAndUpdate(
-        paymentId,
-        {
+      const { error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .update({
           status: 'refunded',
-          refundAmount: refundAmount || payment.amount,
-          refundReason,
-        },
-        { new: true }
-      );
+          refund_amount: refundAmount || payment.amount,
+          refund_reason: refundReason,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', paymentId);
 
+      if (error) throw error;
       return refund;
     } catch (error) {
       throw new Error(`Failed to refund payment: ${error}`);
@@ -201,17 +270,33 @@ export class PaymentsService {
    * Get payment methods
    */
   async getPaymentMethodStats(consultantId: string): Promise<any> {
-    const stats = await Payment.aggregate([
-      { $match: { consultantId, status: 'completed' } },
-      {
-        $group: {
-          _id: '$paymentMethod',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$amount' },
-        },
-      },
-    ]);
+    try {
+      const { data, error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .select('payment_method, amount')
+        .eq('consultant_id', consultantId)
+        .eq('status', 'completed');
 
-    return stats;
+      if (error) throw error;
+
+      const stats: any = {};
+      data?.forEach((payment) => {
+        const method = payment.payment_method || 'unknown';
+        if (!stats[method]) {
+          stats[method] = { count: 0, totalAmount: 0 };
+        }
+        stats[method].count++;
+        stats[method].totalAmount += payment.amount || 0;
+      });
+
+      return Object.entries(stats).map(([method, data]: any) => ({
+        _id: method,
+        count: data.count,
+        totalAmount: data.totalAmount,
+      }));
+    } catch (error) {
+      console.error(`Failed to fetch payment method stats: ${error}`);
+      return [];
+    }
   }
 }
