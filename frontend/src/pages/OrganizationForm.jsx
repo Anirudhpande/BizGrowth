@@ -85,7 +85,7 @@ export default function OrganizationForm() {
         if (res.success) {
           setSuccess('Organization details updated successfully.')
           setTimeout(() => {
-            navigate('/organizations')
+            navigate('/organizations/mine')
           }, 1500)
         }
       } else {
@@ -94,7 +94,7 @@ export default function OrganizationForm() {
         if (res.success) {
           setSuccess('Organization node registered successfully.')
           setTimeout(() => {
-            navigate('/organizations')
+            navigate('/organizations/mine')
           }, 1500)
         }
       }

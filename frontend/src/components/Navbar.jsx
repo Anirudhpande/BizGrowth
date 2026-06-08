@@ -44,6 +44,19 @@ export default function Navbar() {
         {/* Links (Desktop) */}
         <div className="hidden md:flex items-center gap-8">
           <NavLink 
+            to="/" 
+            end
+            className={({ isActive }) => 
+              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+                isActive 
+                  ? 'text-secondary font-bold border-secondary' 
+                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+              }`
+            }
+          >
+            Home
+          </NavLink>
+          <NavLink 
             to="/ecosystem" 
             className={({ isActive }) => 
               `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
@@ -87,6 +100,19 @@ export default function Navbar() {
               </NavLink>
               <NavLink 
                 to="/organizations" 
+                end
+                className={({ isActive }) => 
+                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
+                    isActive 
+                      ? 'text-secondary font-bold border-secondary' 
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  }`
+                }
+              >
+                Organizations
+              </NavLink>
+              <NavLink 
+                to="/organizations/mine" 
                 className={({ isActive }) => 
                   `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
                     isActive 
@@ -96,6 +122,18 @@ export default function Navbar() {
                 }
               >
                 My Organizations
+              </NavLink>
+              <NavLink 
+                to="/profile" 
+                className={({ isActive }) => 
+                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
+                    isActive 
+                      ? 'text-secondary font-bold border-secondary' 
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  }`
+                }
+              >
+                Profile
               </NavLink>
               {user?.role === 'admin' && (
                 <NavLink 
@@ -111,18 +149,6 @@ export default function Navbar() {
                   Admin
                 </NavLink>
               )}
-              <NavLink 
-                to="/profile" 
-                className={({ isActive }) => 
-                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
-                    isActive 
-                      ? 'text-secondary font-bold border-secondary' 
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
-                  }`
-                }
-              >
-                Profile
-              </NavLink>
               <span className="font-label-md text-label-md text-on-surface-variant flex items-center gap-1.5 px-3 py-2">
                 <span className="material-symbols-outlined text-[20px] text-primary">person</span>
                 Hi, <span className="font-bold text-primary">{user.name}</span>
@@ -165,6 +191,20 @@ export default function Navbar() {
       {/* Mobile Drawer (Drop-down) */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-surface border-b border-outline-variant/30 shadow-lg px-margin-mobile py-6 flex flex-col gap-4 animate-fade-in-up">
+          <NavLink 
+            to="/" 
+            end
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={({ isActive }) => 
+              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+                isActive 
+                  ? 'bg-surface-container-low text-secondary font-bold' 
+                  : 'text-on-surface-variant hover:bg-surface-container-low'
+              }`
+            }
+          >
+            Home
+          </NavLink>
           <NavLink 
             to="/ecosystem" 
             onClick={() => setIsMobileMenuOpen(false)}
@@ -214,6 +254,20 @@ export default function Navbar() {
                 </NavLink>
                 <NavLink 
                   to="/organizations" 
+                  end
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => 
+                    `text-center font-label-md text-label-md py-3 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1.5 ${
+                      isActive 
+                        ? 'border-secondary text-secondary font-bold' 
+                        : 'border-outline text-primary hover:bg-surface-container-low'
+                    }`
+                  }
+                >
+                  Organizations
+                </NavLink>
+                <NavLink 
+                  to="/organizations/mine" 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) => 
                     `text-center font-label-md text-label-md py-3 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1.5 ${
@@ -224,6 +278,19 @@ export default function Navbar() {
                   }
                 >
                   My Organizations
+                </NavLink>
+                <NavLink 
+                  to="/profile" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => 
+                    `text-center font-label-md text-label-md py-3 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1.5 ${
+                      isActive 
+                        ? 'border-secondary text-secondary font-bold' 
+                        : 'border-outline text-primary hover:bg-surface-container-low'
+                    }`
+                  }
+                >
+                  Profile
                 </NavLink>
                 {user?.role === 'admin' && (
                   <NavLink 
@@ -240,19 +307,6 @@ export default function Navbar() {
                     Admin
                   </NavLink>
                 )}
-                <NavLink 
-                  to="/profile" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => 
-                    `text-center font-label-md text-label-md py-3 rounded-full hover:bg-surface-container-low transition-all font-semibold border ${
-                      isActive 
-                        ? 'border-secondary text-secondary font-bold' 
-                        : 'border-outline text-primary hover:bg-surface-container-low'
-                    }`
-                  }
-                >
-                  Profile
-                </NavLink>
                 <button 
                   onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
                   className="text-center border border-outline text-primary font-label-md text-label-md py-3 rounded-full hover:bg-surface-container-low transition-all font-semibold"

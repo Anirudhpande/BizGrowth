@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import Profile from './pages/Profile'
 import MyOrganizations from './pages/MyOrganizations'
+import OrganizationDiscovery from './pages/OrganizationDiscovery'
 import OrganizationDetail from './pages/OrganizationDetail'
 import OrganizationForm from './pages/OrganizationForm'
 import AdminDashboard from './pages/AdminDashboard'
@@ -40,10 +41,11 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/discovery" element={<Discovery />} />
             <Route path="/users/:id" element={<UserProfile />} />
-            <Route path="/organizations" element={<MyOrganizations />} />
+            <Route path="/organizations" element={<OrganizationDiscovery />} />
+            <Route path="/organizations/mine" element={<MyOrganizations />} />
             <Route path="/organizations/new" element={<OrganizationForm />} />
-            <Route path="/organizations/:id" element={<OrganizationDetail />} />
             <Route path="/organizations/:id/edit" element={<OrganizationForm />} />
+            <Route path="/organizations/:id" element={<OrganizationDetail />} />
           </Route>
 
           {/* Admin Routes Infrastructure */}

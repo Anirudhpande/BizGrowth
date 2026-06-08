@@ -12,6 +12,7 @@ export default function OrganizationDetail() {
   const [error, setError] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [owner, setOwner] = useState(null)
 
   const handleDelete = async () => {
     try {
@@ -19,7 +20,7 @@ export default function OrganizationDetail() {
       setError('')
       const res = await api.delete(`/api/organizations/${id}`)
       if (res.success) {
-        navigate('/organizations')
+        navigate('/organizations/mine')
       }
     } catch (err) {
       setError(err.message || 'Failed to delete the organization node')
@@ -48,6 +49,23 @@ export default function OrganizationDetail() {
 
     fetchOrgDetail()
   }, [id])
+
+  useEffect(() => {
+    if (!organization?.userId) return
+
+    const fetchOwner = async () => {
+      try {
+        const res = await api.get(`/api/users/${organization.userId}`)
+        if (res.success && res.user) {
+          setOwner(res.user)
+        }
+      } catch {
+        // Silently fail — owner info is optional
+      }
+    }
+
+    fetchOwner()
+  }, [organization?.userId])
 
   if (loading) {
     return (
@@ -259,6 +277,44 @@ export default function OrganizationDetail() {
 
             </div>
           </div>
+
+          {/* Owner Representative */}
+          {owner && (
+            <div className="space-y-3 pt-4 border-t border-outline-variant/20">
+              <h3 className="font-headline-md text-[18px] text-primary font-semibold border-l-4 border-secondary pl-3">
+                Owner Representative
+              </h3>
+              <div className="flex items-center gap-3">
+                {owner.avatarUrl ? (
+                  <img
+                    src={owner.avatarUrl}
+                    alt={`${owner.firstName || ''} ${owner.lastName || ''}`}
+                    className="w-10 h-10 rounded-full object-cover border border-outline-variant/30 shadow-inner shrink-0"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      const initial = owner.firstName ? owner.firstName[0].toUpperCase() : 'U';
+                      e.target.parentNode.innerHTML = `<div class="w-10 h-10 rounded-full bg-secondary/15 border border-secondary/20 flex items-center justify-center text-secondary font-headline-md text-[16px] font-bold shrink-0">${initial}</div>`;
+                    }}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-secondary/15 border border-secondary/20 flex items-center justify-center text-secondary font-headline-md text-[16px] font-bold shrink-0">
+                    {owner.firstName ? owner.firstName[0].toUpperCase() : 'U'}
+                  </div>
+                )}
+                <div>
+                  <Link
+                    to={`/users/${owner.id}`}
+                    className="font-headline-md text-[15px] text-primary font-bold hover:text-secondary transition-colors"
+                  >
+                    {`${owner.firstName || ''} ${owner.lastName || ''}`.trim() || 'Unknown Representative'}
+                  </Link>
+                  {owner.companyName && (
+                    <p className="font-body-sm text-[12px] text-on-surface-variant">{owner.companyName}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
