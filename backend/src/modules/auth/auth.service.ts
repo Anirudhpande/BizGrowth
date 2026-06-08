@@ -10,7 +10,7 @@ import {
 } from '../../types';
 
 // ============================================================
-// Custom Error Classes
+// Custom Error Class
 // ============================================================
 
 export class AppError extends Error {
@@ -30,10 +30,14 @@ export class AppError extends Error {
 // ============================================================
 
 class AuthService {
+  // ----------------------------------------------------------
+  // Token Generators
+  // ----------------------------------------------------------
+
   /**
-   * Generate a JWT token for the given user.
+   * Generate a short-lived ACCESS token (15m by default).
    */
-  private generateToken(user: IUser): string {
+  private generateAccessToken(user: IUser): string {
     const payload: JwtPayload = {
       userId: user.id,
       role: user.role,
@@ -41,14 +45,45 @@ class AuthService {
     };
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new AppError('JWT_SECRET is not configured', 500);
-    }
+    if (!secret) throw new AppError('JWT_SECRET is not configured', 500);
 
-    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-    return jwt.sign(payload, secret, {
-      expiresIn,
-    } as jwt.SignOptions);
+    const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
+    return jwt.sign(payload, secret, { expiresIn } as jwt.SignOptions);
+  }
+
+  /**
+   * Generate a long-lived REFRESH token (7d by default).
+   * Uses a separate secret so the two token types can't be swapped.
+   */
+  private generateRefreshToken(user: IUser): string {
+    const payload: JwtPayload = {
+      userId: user.id,
+      role: user.role,
+      email: user.email,
+    };
+
+    const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh';
+    if (!secret) throw new AppError('JWT_REFRESH_SECRET is not configured', 500);
+
+    const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+    return jwt.sign(payload, secret, { expiresIn } as jwt.SignOptions);
+  }
+
+  /**
+   * Verify a refresh token and return its payload.
+   */
+  private verifyRefreshToken(token: string): JwtPayload {
+    const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET + '_refresh';
+    if (!secret) throw new AppError('JWT_REFRESH_SECRET is not configured', 500);
+
+    try {
+      return jwt.verify(token, secret) as JwtPayload;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new AppError('Refresh token has expired. Please log in again.', 401);
+      }
+      throw new AppError('Invalid refresh token. Please log in again.', 401);
+    }
   }
 
   // ----------------------------------------------------------
@@ -58,36 +93,27 @@ class AuthService {
   async register(input: RegisterInput): Promise<AuthResponse> {
     const { name, email, password, role } = input;
 
-    // 1. Validate required fields
     if (!name || !email || !password) {
       throw new AppError('Name, email, and password are required', 400);
     }
-
     if (password.length < 6) {
       throw new AppError('Password must be at least 6 characters', 400);
     }
 
-    // 2. Check if email already exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
       throw new AppError('An account with this email already exists', 409);
     }
 
-    // 3. Create user (password hashing handled inside model)
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'client',
-    });
+    const user = await User.create({ name, email, password, role: role || 'client' });
 
-    // 4. Generate JWT
-    const token = this.generateToken(user);
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
 
-    // 5. Return response
     return {
       success: true,
-      token,
+      accessToken,
+      refreshToken,
       user: User.sanitize(user),
     };
   }
@@ -99,38 +125,64 @@ class AuthService {
   async login(input: LoginInput): Promise<AuthResponse> {
     const { email, password } = input;
 
-    // 1. Validate required fields
     if (!email || !password) {
       throw new AppError('Email and password are required', 400);
     }
 
-    // 2. Find user by email (includes password for comparison)
     const user = await User.findByEmail(email);
     if (!user) {
       throw new AppError('Invalid email or password', 401);
     }
 
-    // 3. Check account status
     if (user.status === 'suspended') {
-      throw new AppError(
-        'Your account has been suspended. Please contact support.',
-        403
-      );
+      throw new AppError('Your account has been suspended. Please contact support.', 403);
     }
 
-    // 4. Compare password
     const isPasswordValid = await User.comparePassword(password, user.password || '');
     if (!isPasswordValid) {
       throw new AppError('Invalid email or password', 401);
     }
 
-    // 5. Generate JWT
-    const token = this.generateToken(user);
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
 
-    // 6. Return response
     return {
       success: true,
-      token,
+      accessToken,
+      refreshToken,
+      user: User.sanitize(user),
+    };
+  }
+
+  // ----------------------------------------------------------
+  // Refresh Token — Issue new access token
+  // ----------------------------------------------------------
+
+  async refreshAccessToken(token: string): Promise<AuthResponse> {
+    if (!token) {
+      throw new AppError('Refresh token is required', 400);
+    }
+
+    // 1. Verify the refresh token
+    const payload = this.verifyRefreshToken(token);
+
+    // 2. Fetch current user to ensure they still exist and are active
+    const user = await User.findById(payload.userId);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+    if (user.status === 'suspended') {
+      throw new AppError('Your account has been suspended. Please contact support.', 403);
+    }
+
+    // 3. Issue fresh tokens (token rotation — both rotated on refresh)
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+
+    return {
+      success: true,
+      accessToken,
+      refreshToken,
       user: User.sanitize(user),
     };
   }
@@ -145,12 +197,8 @@ class AuthService {
     if (!user) {
       throw new AppError('User not found', 404);
     }
-
     if (user.status === 'suspended') {
-      throw new AppError(
-        'Your account has been suspended. Please contact support.',
-        403
-      );
+      throw new AppError('Your account has been suspended. Please contact support.', 403);
     }
 
     return User.sanitize(user);
