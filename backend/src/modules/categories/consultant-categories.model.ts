@@ -1,33 +1,21 @@
-import { Schema, model } from 'mongoose';
-
-interface IConsultantCategory {
-  _id?: string;
-  consultantId: string;
-  categoryId: string;
-  createdAt?: Date;
+export interface IConsultantCategory {
+  id?: string;
+  consultant_id: string;
+  category_id: string;
+  created_at?: Date;
 }
 
-const consultantCategorySchema = new Schema<IConsultantCategory>(
-  {
-    consultantId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-    categoryId: {
-      type: String,
-      required: true,
-      index: true,
-    },
-  },
-  { timestamps: true }
-);
+// SQL table structure (for reference)
+export const CONSULTANT_CATEGORIES_TABLE = 'consultant_categories';
 
-// Compound index to ensure unique consultant-category pairs
-consultantCategorySchema.index({ consultantId: 1, categoryId: 1 }, { unique: true });
-
-export const ConsultantCategory = model<IConsultantCategory>(
-  'ConsultantCategory',
-  consultantCategorySchema
-);
-export type { IConsultantCategory };
+export const consultantCategoriesTableSchema = `
+  CREATE TABLE IF NOT EXISTS ${CONSULTANT_CATEGORIES_TABLE} (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consultant_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(consultant_id, category_id),
+    INDEX idx_consultant_id (consultant_id),
+    INDEX idx_category_id (category_id)
+  )
+`;
