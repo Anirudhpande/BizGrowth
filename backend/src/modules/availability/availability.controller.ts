@@ -3,6 +3,9 @@ import { AvailabilityService } from './availability.service';
 
 const availabilityService = new AvailabilityService();
 
+// Helper to safely get a string param
+const qs = (v: string | string[] | undefined): string => (Array.isArray(v) ? v[0] : v ?? '');
+
 export class AvailabilityController {
   /**
    * POST /api/availability
@@ -36,7 +39,7 @@ export class AvailabilityController {
    */
   async getAvailability(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const availability = await availabilityService.getAvailability(consultantId);
 
       if (!availability) {
@@ -56,7 +59,7 @@ export class AvailabilityController {
    */
   async updateSlots(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const { slots } = req.body;
 
       if (!slots) {
@@ -86,7 +89,7 @@ export class AvailabilityController {
    */
   async addBlockedDates(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const { dates } = req.body;
 
       if (!dates || !Array.isArray(dates)) {
@@ -116,7 +119,8 @@ export class AvailabilityController {
    */
   async removeBlockedDate(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId, date } = req.params;
+      const consultantId = qs(req.params['consultantId']);
+      const date = qs(req.params['date']);
 
       const availability = await availabilityService.removeBlockedDate(
         consultantId,
@@ -140,7 +144,7 @@ export class AvailabilityController {
    */
   async addBreakTime(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const { startTime, endTime } = req.body;
 
       if (!startTime || !endTime) {
@@ -171,8 +175,10 @@ export class AvailabilityController {
    */
   async getAvailableSlots(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
-      const { fromDate, toDate, durationMinutes } = req.query;
+      const consultantId = qs(req.params['consultantId']);
+      const fromDate = qs(req.query['fromDate'] as string | string[]);
+      const toDate = qs(req.query['toDate'] as string | string[]);
+      const durationMinutes = qs(req.query['durationMinutes'] as string | string[]);
 
       if (!fromDate || !toDate) {
         res.status(400).json({ error: 'From and to dates are required' });
@@ -181,9 +187,9 @@ export class AvailabilityController {
 
       const slots = await availabilityService.getAvailableSlots(
         consultantId,
-        new Date(fromDate as string),
-        new Date(toDate as string),
-        parseInt(durationMinutes as string) || 60
+        new Date(fromDate),
+        new Date(toDate),
+        parseInt(durationMinutes) || 60
       );
 
       res.json({ slots });
@@ -198,7 +204,7 @@ export class AvailabilityController {
    */
   async deleteAvailability(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const deleted = await availabilityService.deleteAvailability(consultantId);
 
       if (!deleted) {

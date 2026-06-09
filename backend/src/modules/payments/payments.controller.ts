@@ -3,6 +3,9 @@ import { PaymentsService } from './payments.service';
 
 const paymentsService = new PaymentsService();
 
+// Helper to safely get a string param
+const qs = (v: string | string[] | undefined): string => (Array.isArray(v) ? v[0] : v ?? '');
+
 export class PaymentsController {
   /**
    * POST /api/payments/create-order
@@ -55,13 +58,11 @@ export class PaymentsController {
         return;
       }
 
-      // Update payment status to completed
-      const payment = await paymentsService.getPaymentByOrderId(razorpayOrderId);
-      if (payment) {
-        payment.razorpayPaymentId = razorpayPaymentId;
-        payment.status = 'completed';
-        await payment.save();
-      }
+      // Update payment status to completed via service
+      const payment = await paymentsService.updatePaymentAfterVerification(
+        razorpayOrderId,
+        razorpayPaymentId
+      );
 
       res.json({ message: 'Payment verified successfully', payment });
     } catch (error) {
@@ -104,7 +105,7 @@ export class PaymentsController {
    */
   async getPayment(req: Request, res: Response): Promise<void> {
     try {
-      const { paymentId } = req.params;
+      const paymentId = qs(req.params['paymentId']);
       const payment = await paymentsService.getPaymentById(paymentId);
 
       if (!payment) {
@@ -124,10 +125,10 @@ export class PaymentsController {
    */
   async getConsultantPayments(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
-      const { status } = req.query;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const skip = parseInt(req.query.skip as string) || 0;
+      const consultantId = qs(req.params['consultantId']);
+      const status = qs(req.query['status'] as string | string[]);
+      const limit = parseInt(qs(req.query['limit'] as string | string[])) || 10;
+      const skip = parseInt(qs(req.query['skip'] as string | string[])) || 0;
 
       const { payments, total } = await paymentsService.getConsultantPayments(
         consultantId,
@@ -151,7 +152,7 @@ export class PaymentsController {
    */
   async getPaymentStats(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const stats = await paymentsService.getPaymentStats(consultantId);
       const methodStats = await paymentsService.getPaymentMethodStats(consultantId);
 
@@ -170,7 +171,7 @@ export class PaymentsController {
    */
   async refundPayment(req: Request, res: Response): Promise<void> {
     try {
-      const { paymentId } = req.params;
+      const paymentId = qs(req.params['paymentId']);
       const { refundAmount, refundReason } = req.body;
 
       const refund = await paymentsService.refundPayment(

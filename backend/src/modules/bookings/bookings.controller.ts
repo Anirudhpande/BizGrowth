@@ -3,22 +3,22 @@ import { BookingsService } from './bookings.service';
 
 const bookingsService = new BookingsService();
 
+// Helper to safely get a string param
+const qs = (v: string | string[] | undefined): string => (Array.isArray(v) ? v[0] : v ?? '');
+
 export class BookingsController {
   /**
    * POST /api/bookings
-   * Create a new booking
    */
   async createBooking(req: Request, res: Response): Promise<void> {
     try {
       const { consultantId, clientId, scheduledAt, durationMinutes, notes } = req.body;
 
-      // Validate required fields
       if (!consultantId || !clientId || !scheduledAt) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
       }
 
-      // Check availability
       const isAvailable = await bookingsService.checkAvailability(
         consultantId,
         new Date(scheduledAt),
@@ -31,10 +31,10 @@ export class BookingsController {
       }
 
       const booking = await bookingsService.createBooking({
-        consultantId,
-        clientId,
-        scheduledAt: new Date(scheduledAt),
-        durationMinutes: durationMinutes || 60,
+        consultant_id: consultantId,
+        client_id: clientId,
+        scheduled_at: new Date(scheduledAt),
+        duration_minutes: durationMinutes || 60,
         notes,
         status: 'pending',
       });
@@ -47,11 +47,10 @@ export class BookingsController {
 
   /**
    * GET /api/bookings/:bookingId
-   * Get booking by ID
    */
   async getBooking(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const bookingId = qs(req.params['bookingId']);
       const booking = await bookingsService.getBookingById(bookingId);
 
       if (!booking) {
@@ -67,18 +66,12 @@ export class BookingsController {
 
   /**
    * GET /api/bookings/consultant/:consultantId
-   * Get all bookings for a consultant
    */
   async getConsultantBookings(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
-      const { status } = req.query;
-
-      const bookings = await bookingsService.getConsultantBookings(
-        consultantId,
-        status as string
-      );
-
+      const consultantId = qs(req.params['consultantId']);
+      const status = qs(req.query['status'] as string | string[]);
+      const bookings = await bookingsService.getConsultantBookings(consultantId, status || undefined);
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: `Failed to fetch bookings: ${error}` });
@@ -87,18 +80,12 @@ export class BookingsController {
 
   /**
    * GET /api/bookings/client/:clientId
-   * Get all bookings for a client
    */
   async getClientBookings(req: Request, res: Response): Promise<void> {
     try {
-      const { clientId } = req.params;
-      const { status } = req.query;
-
-      const bookings = await bookingsService.getClientBookings(
-        clientId,
-        status as string
-      );
-
+      const clientId = qs(req.params['clientId']);
+      const status = qs(req.query['status'] as string | string[]);
+      const bookings = await bookingsService.getClientBookings(clientId, status || undefined);
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: `Failed to fetch bookings: ${error}` });
@@ -107,11 +94,10 @@ export class BookingsController {
 
   /**
    * PATCH /api/bookings/:bookingId/status
-   * Update booking status
    */
   async updateBookingStatus(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const bookingId = qs(req.params['bookingId']);
       const { status } = req.body;
 
       if (!status) {
@@ -134,11 +120,10 @@ export class BookingsController {
 
   /**
    * DELETE /api/bookings/:bookingId
-   * Cancel/delete booking
    */
   async cancelBooking(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const bookingId = qs(req.params['bookingId']);
       const booking = await bookingsService.cancelBooking(bookingId);
 
       if (!booking) {
@@ -154,11 +139,12 @@ export class BookingsController {
 
   /**
    * GET /api/bookings/availability/check
-   * Check consultant availability
    */
   async checkAvailability(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId, scheduledAt, durationMinutes } = req.query;
+      const consultantId = qs(req.query['consultantId'] as string | string[]);
+      const scheduledAt = qs(req.query['scheduledAt'] as string | string[]);
+      const durationMinutes = qs(req.query['durationMinutes'] as string | string[]);
 
       if (!consultantId || !scheduledAt) {
         res.status(400).json({ error: 'Missing required parameters' });
@@ -166,9 +152,9 @@ export class BookingsController {
       }
 
       const isAvailable = await bookingsService.checkAvailability(
-        consultantId as string,
-        new Date(scheduledAt as string),
-        parseInt(durationMinutes as string) || 60
+        consultantId,
+        new Date(scheduledAt),
+        parseInt(durationMinutes) || 60
       );
 
       res.json({ available: isAvailable });

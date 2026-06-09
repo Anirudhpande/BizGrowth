@@ -3,6 +3,9 @@ import { CategoriesService } from './categories.service';
 
 const categoriesService = new CategoriesService();
 
+// Helper to safely get a string param
+const qs = (v: string | string[] | undefined): string => (Array.isArray(v) ? v[0] : v ?? '');
+
 export class CategoriesController {
   /**
    * POST /api/categories
@@ -92,7 +95,7 @@ export class CategoriesController {
    */
   async getCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { categoryId } = req.params;
+      const categoryId = qs(req.params['categoryId']);
       const category = await categoriesService.getCategoryById(categoryId);
 
       if (!category) {
@@ -112,7 +115,7 @@ export class CategoriesController {
    */
   async updateCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { categoryId } = req.params;
+      const categoryId = qs(req.params['categoryId']);
       const updateData = req.body;
 
       const category = await categoriesService.updateCategory(categoryId, updateData);
@@ -134,7 +137,7 @@ export class CategoriesController {
    */
   async deleteCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { categoryId } = req.params;
+      const categoryId = qs(req.params['categoryId']);
       const deleted = await categoriesService.deleteCategory(categoryId);
 
       if (!deleted) {
@@ -154,7 +157,8 @@ export class CategoriesController {
    */
   async addConsultantToCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { categoryId, consultantId } = req.params;
+      const categoryId = qs(req.params['categoryId']);
+      const consultantId = qs(req.params['consultantId']);
 
       const mapping = await categoriesService.addConsultantToCategory(
         consultantId,
@@ -173,7 +177,8 @@ export class CategoriesController {
    */
   async removeConsultantFromCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { categoryId, consultantId } = req.params;
+      const categoryId = qs(req.params['categoryId']);
+      const consultantId = qs(req.params['consultantId']);
 
       const removed = await categoriesService.removeConsultantFromCategory(
         consultantId,
@@ -197,7 +202,7 @@ export class CategoriesController {
    */
   async getConsultantCategories(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
 
       const categories = await categoriesService.getConsultantCategories(consultantId);
 
@@ -213,9 +218,9 @@ export class CategoriesController {
    */
   async getConsultantsInCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { categoryId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const skip = parseInt(req.query.skip as string) || 0;
+      const categoryId = qs(req.params['categoryId']);
+      const limit = parseInt(qs(req.query['limit'] as string | string[])) || 50;
+      const skip = parseInt(qs(req.query['skip'] as string | string[])) || 0;
 
       const { consultants, total } = await categoriesService.getConsultantsInCategory(
         categoryId,
@@ -238,7 +243,7 @@ export class CategoriesController {
    */
   async bulkAssignCategories(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
       const { categoryIds } = req.body;
 
       if (!categoryIds || !Array.isArray(categoryIds)) {

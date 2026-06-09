@@ -108,6 +108,33 @@ export class PaymentsService {
   }
 
   /**
+   * Update payment after signature verification
+   */
+  async updatePaymentAfterVerification(
+    razorpayOrderId: string,
+    razorpayPaymentId: string
+  ): Promise<IPayment | null> {
+    try {
+      const { data, error } = await supabase
+        .from(PAYMENTS_TABLE)
+        .update({
+          razorpay_payment_id: razorpayPaymentId,
+          status: 'completed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('razorpay_order_id', razorpayOrderId)
+        .select()
+        .single();
+
+      if (error) return null;
+      return data;
+    } catch (error) {
+      console.error(`Failed to update payment: ${error}`);
+      return null;
+    }
+  }
+
+  /**
    * Get payment by ID
    */
   async getPaymentById(paymentId: string): Promise<IPayment | null> {

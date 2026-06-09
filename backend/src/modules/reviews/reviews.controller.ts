@@ -3,28 +3,27 @@ import { ReviewsService } from './reviews.service';
 
 const reviewsService = new ReviewsService();
 
+// Helper to safely get a string param
+const qs = (v: string | string[] | undefined): string => (Array.isArray(v) ? v[0] : v ?? '');
+
 export class ReviewsController {
   /**
    * POST /api/reviews
-   * Create a new review
    */
   async createReview(req: Request, res: Response): Promise<void> {
     try {
       const { bookingId, consultantId, clientId, rating, title, comment } = req.body;
 
-      // Validate required fields
       if (!bookingId || !consultantId || !clientId || !rating || !comment) {
         res.status(400).json({ error: 'Missing required fields' });
         return;
       }
 
-      // Validate rating range
       if (rating < 1 || rating > 5) {
         res.status(400).json({ error: 'Rating must be between 1 and 5' });
         return;
       }
 
-      // Check if review already exists for this booking
       const exists = await reviewsService.reviewExistsForBooking(bookingId);
       if (exists) {
         res.status(409).json({ error: 'Review already exists for this booking' });
@@ -32,9 +31,9 @@ export class ReviewsController {
       }
 
       const review = await reviewsService.createReview({
-        bookingId,
-        consultantId,
-        clientId,
+        booking_id: bookingId,
+        consultant_id: consultantId,
+        client_id: clientId,
         rating,
         title,
         comment,
@@ -48,11 +47,10 @@ export class ReviewsController {
 
   /**
    * GET /api/reviews/:reviewId
-   * Get review by ID
    */
   async getReview(req: Request, res: Response): Promise<void> {
     try {
-      const { reviewId } = req.params;
+      const reviewId = qs(req.params['reviewId']);
       const review = await reviewsService.getReviewById(reviewId);
 
       if (!review) {
@@ -68,24 +66,16 @@ export class ReviewsController {
 
   /**
    * GET /api/reviews/consultant/:consultantId
-   * Get all reviews for a consultant
    */
   async getConsultantReviews(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const skip = parseInt(req.query.skip as string) || 0;
+      const consultantId = qs(req.params['consultantId']);
+      const limit = parseInt(qs(req.query['limit'] as string | string[])) || 10;
+      const skip = parseInt(qs(req.query['skip'] as string | string[])) || 0;
 
-      const { reviews, total } = await reviewsService.getConsultantReviews(
-        consultantId,
-        limit,
-        skip
-      );
+      const { reviews, total } = await reviewsService.getConsultantReviews(consultantId, limit, skip);
 
-      res.json({
-        reviews,
-        pagination: { limit, skip, total },
-      });
+      res.json({ reviews, pagination: { limit, skip, total } });
     } catch (error) {
       res.status(500).json({ error: `Failed to fetch reviews: ${error}` });
     }
@@ -93,24 +83,16 @@ export class ReviewsController {
 
   /**
    * GET /api/reviews/client/:clientId
-   * Get all reviews by a client
    */
   async getClientReviews(req: Request, res: Response): Promise<void> {
     try {
-      const { clientId } = req.params;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const skip = parseInt(req.query.skip as string) || 0;
+      const clientId = qs(req.params['clientId']);
+      const limit = parseInt(qs(req.query['limit'] as string | string[])) || 10;
+      const skip = parseInt(qs(req.query['skip'] as string | string[])) || 0;
 
-      const { reviews, total } = await reviewsService.getClientReviews(
-        clientId,
-        limit,
-        skip
-      );
+      const { reviews, total } = await reviewsService.getClientReviews(clientId, limit, skip);
 
-      res.json({
-        reviews,
-        pagination: { limit, skip, total },
-      });
+      res.json({ reviews, pagination: { limit, skip, total } });
     } catch (error) {
       res.status(500).json({ error: `Failed to fetch reviews: ${error}` });
     }
@@ -118,21 +100,16 @@ export class ReviewsController {
 
   /**
    * GET /api/reviews/consultant/:consultantId/stats
-   * Get consultant review statistics
    */
   async getConsultantStats(req: Request, res: Response): Promise<void> {
     try {
-      const { consultantId } = req.params;
+      const consultantId = qs(req.params['consultantId']);
 
       const averageRating = await reviewsService.getConsultantAverageRating(consultantId);
       const distribution = await reviewsService.getRatingDistribution(consultantId);
       const { total } = await reviewsService.getConsultantReviews(consultantId, 1, 0);
 
-      res.json({
-        averageRating,
-        totalReviews: total,
-        distribution,
-      });
+      res.json({ averageRating, totalReviews: total, distribution });
     } catch (error) {
       res.status(500).json({ error: `Failed to fetch stats: ${error}` });
     }
@@ -140,11 +117,10 @@ export class ReviewsController {
 
   /**
    * PATCH /api/reviews/:reviewId
-   * Update review
    */
   async updateReview(req: Request, res: Response): Promise<void> {
     try {
-      const { reviewId } = req.params;
+      const reviewId = qs(req.params['reviewId']);
       const updateData = req.body;
 
       const review = await reviewsService.updateReview(reviewId, updateData);
@@ -162,11 +138,10 @@ export class ReviewsController {
 
   /**
    * DELETE /api/reviews/:reviewId
-   * Delete review
    */
   async deleteReview(req: Request, res: Response): Promise<void> {
     try {
-      const { reviewId } = req.params;
+      const reviewId = qs(req.params['reviewId']);
       const deleted = await reviewsService.deleteReview(reviewId);
 
       if (!deleted) {
@@ -182,11 +157,10 @@ export class ReviewsController {
 
   /**
    * POST /api/reviews/:reviewId/helpful
-   * Mark review as helpful
    */
   async markHelpful(req: Request, res: Response): Promise<void> {
     try {
-      const { reviewId } = req.params;
+      const reviewId = qs(req.params['reviewId']);
       const review = await reviewsService.markHelpful(reviewId);
 
       if (!review) {

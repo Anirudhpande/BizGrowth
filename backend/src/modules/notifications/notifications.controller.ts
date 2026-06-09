@@ -3,6 +3,9 @@ import { NotificationsService } from './notifications.service';
 
 const notificationsService = new NotificationsService();
 
+// Helper to safely get a string param
+const qs = (v: string | string[] | undefined): string => (Array.isArray(v) ? v[0] : v ?? '');
+
 export class NotificationsController {
   /**
    * POST /api/notifications
@@ -40,10 +43,10 @@ export class NotificationsController {
    */
   async getUserNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
-      const { read } = req.query;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const skip = parseInt(req.query.skip as string) || 0;
+      const userId = qs(req.params['userId']);
+      const read = qs(req.query['read'] as string | string[]);
+      const limit = parseInt(qs(req.query['limit'] as string | string[])) || 10;
+      const skip = parseInt(qs(req.query['skip'] as string | string[])) || 0;
 
       const { notifications, total } = await notificationsService.getUserNotifications(
         userId,
@@ -67,7 +70,7 @@ export class NotificationsController {
    */
   async getUnreadCount(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
+      const userId = qs(req.params['userId']);
       const count = await notificationsService.getUnreadCount(userId);
 
       res.json({ unreadCount: count });
@@ -82,7 +85,7 @@ export class NotificationsController {
    */
   async markAsRead(req: Request, res: Response): Promise<void> {
     try {
-      const { notificationId } = req.params;
+      const notificationId = qs(req.params['notificationId']);
       const notification = await notificationsService.markAsRead(notificationId);
 
       if (!notification) {
@@ -102,7 +105,7 @@ export class NotificationsController {
    */
   async markAllAsRead(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
+      const userId = qs(req.params['userId']);
       await notificationsService.markAllAsRead(userId);
 
       res.json({ message: 'All notifications marked as read' });
@@ -117,7 +120,7 @@ export class NotificationsController {
    */
   async deleteNotification(req: Request, res: Response): Promise<void> {
     try {
-      const { notificationId } = req.params;
+      const notificationId = qs(req.params['notificationId']);
       const deleted = await notificationsService.deleteNotification(notificationId);
 
       if (!deleted) {
@@ -137,7 +140,7 @@ export class NotificationsController {
    */
   async deleteAllNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const { userId } = req.params;
+      const userId = qs(req.params['userId']);
       await notificationsService.deleteAllNotifications(userId);
 
       res.json({ message: 'All notifications deleted' });
