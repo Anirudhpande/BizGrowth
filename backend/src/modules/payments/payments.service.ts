@@ -1,4 +1,3 @@
-import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { IPayment } from './payments.model';
@@ -8,10 +7,20 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY || ''
 );
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-});
+// Lazy Razorpay getter — only instantiate when keys are available
+let _razorpay: any = null;
+function getRazorpay() {
+  if (!_razorpay) {
+    const Razorpay = require('razorpay');
+    const key_id = process.env.RAZORPAY_KEY_ID;
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!key_id || !key_secret) {
+      throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in .env');
+    }
+    _razorpay = new Razorpay({ key_id, key_secret });
+  }
+  return _razorpay;
+}
 
 const PAYMENTS_TABLE = 'payments';
 
@@ -38,7 +47,7 @@ export class PaymentsService {
         },
       };
 
-      const order = await razorpay.orders.create(options);
+      const order = await getRazorpay().orders.create(options);
 
       // Save payment record
       const { error } = await supabase.from(PAYMENTS_TABLE).insert([
@@ -270,7 +279,7 @@ export class PaymentsService {
         },
       };
 
-      const refund = await razorpay.payments.refund(
+      const refund = await getRazorpay().payments.refund(
         payment.razorpay_payment_id,
         refundOptions
       );
