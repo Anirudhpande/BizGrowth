@@ -1,5 +1,33 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+function clearStorageAndNotify() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  window.dispatchEvent(new Event('auth-expired'));
+}
+
+function throwError(response, data) {
+  const errorMsg = data.message || `Request failed with status ${response.status}`;
+  const error = new Error(errorMsg);
+  error.status = response.status;
+  error.data = data;
+  throw error;
+}
+
 async function request(path, options = {}) {
   const token = localStorage.getItem('token');
   
@@ -29,11 +57,93 @@ async function request(path, options = {}) {
     }
 
     if (!response.ok) {
-      const errorMsg = data.message || `Request failed with status ${response.status}`;
-      const error = new Error(errorMsg);
-      error.status = response.status;
-      error.data = data;
-      throw error;
+      // Intercept 401 errors for expired tokens (skip auth/refresh, auth/login, auth/register)
+      if (
+        response.status === 401 &&
+        path !== '/api/auth/refresh' &&
+        path !== '/api/auth/login' &&
+        path !== '/api/auth/register'
+      ) {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          clearStorageAndNotify();
+          throwError(response, data);
+        }
+
+        if (isRefreshing) {
+          try {
+            const newToken = await new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            });
+            // Update Authorization header and retry
+            config.headers['Authorization'] = `Bearer ${newToken}`;
+            const retryResponse = await fetch(`${API_URL}${path}`, config);
+            let retryData;
+            try {
+              retryData = await retryResponse.json();
+            } catch (err) {
+              retryData = { success: retryResponse.ok, message: 'Response parsing failed' };
+            }
+            if (!retryResponse.ok) {
+              throwError(retryResponse, retryData);
+            }
+            return retryData;
+          } catch (err) {
+            throw err;
+          }
+        }
+
+        isRefreshing = true;
+
+        try {
+          // Call direct fetch to avoid interceptor infinite loop
+          const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (!refreshResponse.ok) {
+            throw new Error('Refresh token request failed');
+          }
+
+          const refreshData = await refreshResponse.json();
+
+          if (refreshData && refreshData.accessToken) {
+            localStorage.setItem('token', refreshData.accessToken);
+            localStorage.setItem('refreshToken', refreshData.refreshToken);
+            
+            isRefreshing = false;
+            processQueue(null, refreshData.accessToken);
+
+            // Notify AuthContext with the updated user data
+            window.dispatchEvent(new CustomEvent('auth-refreshed', { detail: refreshData.user }));
+
+            // Retry original request
+            config.headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+            const retryResponse = await fetch(`${API_URL}${path}`, config);
+            let retryData;
+            try {
+              retryData = await retryResponse.json();
+            } catch (err) {
+              retryData = { success: retryResponse.ok, message: 'Response parsing failed' };
+            }
+            if (!retryResponse.ok) {
+              throwError(retryResponse, retryData);
+            }
+            return retryData;
+          } else {
+            throw new Error('Refresh did not return valid accessToken');
+          }
+        } catch (err) {
+          isRefreshing = false;
+          processQueue(err, null);
+          clearStorageAndNotify();
+          throwError(response, data);
+        }
+      }
+
+      throwError(response, data);
     }
 
     return data;

@@ -85,6 +85,28 @@ export function AuthProvider({ children }) {
     verifyToken();
   }, [verifyToken]);
 
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    const handleRefreshed = (e) => {
+      if (e.detail) {
+        setUser(e.detail);
+        setIsAuthenticated(true);
+      }
+    };
+
+    window.addEventListener('auth-expired', handleExpired);
+    window.addEventListener('auth-refreshed', handleRefreshed);
+
+    return () => {
+      window.removeEventListener('auth-expired', handleExpired);
+      window.removeEventListener('auth-refreshed', handleRefreshed);
+    };
+  }, []);
+
   // ---- Login ----
   const login = async (email, password) => {
     setLoading(true);
