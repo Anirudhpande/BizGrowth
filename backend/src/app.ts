@@ -39,7 +39,30 @@ app.use(helmet());
 // ---- CORS ----
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        process.env.CORS_ORIGIN,
+        'http://localhost:5173',
+        'http://localhost:5000',
+        'http://localhost:3000'
+      ].filter(Boolean);
+
+      // Clean trailing slashes from allowed origins
+      const cleanedOrigins = allowedOrigins.map(o => o!.replace(/\/$/, ''));
+
+      if (
+        cleanedOrigins.includes(origin) || 
+        cleanedOrigins.includes('*') ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost')
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
