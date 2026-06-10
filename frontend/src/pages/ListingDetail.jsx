@@ -22,9 +22,11 @@ export default function ListingDetail() {
       setLoading(true);
       setError('');
       try {
-        const data = await api.get(`/api/marketplace/${id}`);
-        if (data) {
-          setListing(data);
+        const res = await api.get(`/api/marketplace/${id}`);
+        if (res && res.data) {
+          setListing(res.data);
+        } else if (res) {
+          setListing(res);
         } else {
           throw new Error('Listing not found.');
         }

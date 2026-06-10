@@ -17,7 +17,7 @@ export default function Marketplace() {
   const [totalPages, setTotalPages] = useState(1);
 
   const industries = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Marketing', 'Consulting', 'Other'];
-  const types = ['Service', 'Collaboration', 'Sale', 'Inquiry', 'Other'];
+  const types = ['sell', 'buy', 'partner', 'supplier', 'investor'];
 
   const fetchListings = async () => {
     setLoading(true);
@@ -32,7 +32,10 @@ export default function Marketplace() {
       });
 
       const res = await api.get(`/api/marketplace?${queryParams.toString()}`);
-      if (res && res.listings) {
+      if (res && res.data) {
+        setListings(res.data);
+        setTotalPages(res.pagination?.totalPages || 1);
+      } else if (res && res.listings) {
         setListings(res.listings);
         setTotalPages(res.pagination?.totalPages || 1);
       } else {

@@ -8,6 +8,11 @@ DO $$ BEGIN
   CREATE TYPE availability_status AS ENUM ('available', 'busy', 'unavailable');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+CREATE OR REPLACE FUNCTION public.immutable_array_to_string(arr text[], sep text)
+RETURNS text AS $$
+  SELECT array_to_string(arr, sep);
+$$ LANGUAGE sql IMMUTABLE;
+
 -- Consultant profiles table (extends users)
 CREATE TABLE IF NOT EXISTS public.consultant_profiles (
   id                UUID                DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -52,7 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_services_is_active      ON public.services (is_ac
 -- Full-text search on consultants
 CREATE INDEX IF NOT EXISTS idx_consultant_search
   ON public.consultant_profiles USING GIN (
-    to_tsvector('english', coalesce(tagline, '') || ' ' || array_to_string(expertise, ' '))
+    to_tsvector('english', coalesce(tagline, '') || ' ' || public.immutable_array_to_string(expertise, ' '))
   );
 
 -- Auto-update triggers

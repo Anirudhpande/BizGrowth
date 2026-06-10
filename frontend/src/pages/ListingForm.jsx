@@ -10,7 +10,7 @@ export default function ListingForm() {
   // Form Fields State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState('Collaboration');
+  const [type, setType] = useState('partner');
   const [industry, setIndustry] = useState('Technology');
   const [budget, setBudget] = useState('');
   const [currency, setCurrency] = useState('INR');
@@ -25,22 +25,23 @@ export default function ListingForm() {
   const [error, setError] = useState('');
 
   const industries = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Marketing', 'Consulting', 'Other'];
-  const types = ['Service', 'Collaboration', 'Sale', 'Inquiry', 'Other'];
+  const types = ['sell', 'buy', 'partner', 'supplier', 'investor'];
 
   useEffect(() => {
     const fetchOrgsAndListing = async () => {
       setLoading(true);
       try {
         // Load user's organizations
-        const orgs = await api.get('/api/organizations');
-        setOrganizations(orgs || []);
+        const orgsRes = await api.get('/api/organizations/my');
+        setOrganizations(orgsRes?.data || []);
 
         if (isEditMode) {
-          const listing = await api.get(`/api/marketplace/${id}`);
+          const res = await api.get(`/api/marketplace/${id}`);
+          const listing = res?.data || res;
           if (listing) {
             setTitle(listing.title || '');
             setDescription(listing.description || '');
-            setType(listing.type || 'Collaboration');
+            setType(listing.type || 'partner');
             setIndustry(listing.industry || 'Technology');
             setBudget(listing.budget ? listing.budget.toString() : '');
             setCurrency(listing.currency || 'INR');

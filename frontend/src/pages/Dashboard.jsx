@@ -42,7 +42,8 @@ export default function Dashboard() {
   // Check if consultant
   const checkConsultantProfile = useCallback(async () => {
     try {
-      const profile = await api.get('/api/consultants/me');
+      const res = await api.get('/api/consultants/me');
+      const profile = res?.data || res;
       if (profile && profile.id) {
         setConsultantProfile(profile);
       }
@@ -63,10 +64,10 @@ export default function Dashboard() {
       if (tab === 'overview') {
         // Fetch summary metrics
         const listRes = await api.get('/api/marketplace/my');
-        setMyListings(listRes || []);
+        setMyListings(listRes?.data || []);
         
         const regEvents = await api.get('/api/events/registered');
-        setRegisteredEvents(regEvents || []);
+        setRegisteredEvents(regEvents?.data || []);
 
         const clientB = await api.get(`/api/bookings/client/${user.id}`);
         setClientBookings(clientB || []);
@@ -77,7 +78,7 @@ export default function Dashboard() {
         }
       } else if (tab === 'notifications') {
         const notifs = await api.get(`/api/notifications/user/${user.id}`);
-        setNotifications(notifs || []);
+        setNotifications(notifs?.notifications || []);
       } else if (tab === 'bookings') {
         const clientB = await api.get(`/api/bookings/client/${user.id}`);
         setClientBookings(clientB || []);
@@ -88,16 +89,16 @@ export default function Dashboard() {
         }
       } else if (tab === 'listings') {
         const listRes = await api.get('/api/marketplace/my');
-        setMyListings(listRes || []);
+        setMyListings(listRes?.data || []);
       } else if (tab === 'events') {
         const regEvents = await api.get('/api/events/registered');
-        setRegisteredEvents(regEvents || []);
+        setRegisteredEvents(regEvents?.data || []);
 
         const orgEvents = await api.get('/api/events/my');
-        setMyEvents(orgEvents || []);
+        setMyEvents(orgEvents?.data || []);
       } else if (tab === 'services' && consultantProfile) {
         const servRes = await api.get('/api/consultants/services/my');
-        setMyServices(servRes || []);
+        setMyServices(servRes?.data || []);
       }
     } catch (err) {
       console.error(`Error loading data for tab ${tab}:`, err);

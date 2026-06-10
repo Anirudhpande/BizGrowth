@@ -85,3 +85,23 @@ CREATE TABLE IF NOT EXISTS availability_slots (
 
 CREATE INDEX IF NOT EXISTS idx_availability_slots_availability_id ON availability_slots(availability_id);
 CREATE INDEX IF NOT EXISTS idx_availability_slots_day_of_week ON availability_slots(day_of_week);
+
+-- ---- 6. HELPER FUNCTIONS (RPCs for Categories) ----
+CREATE OR REPLACE FUNCTION increment_consultant_count(category_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE categories
+  SET consultant_count = COALESCE(consultant_count, 0) + 1
+  WHERE id = category_id;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION decrement_consultant_count(category_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE categories
+  SET consultant_count = GREATEST(0, COALESCE(consultant_count, 0) - 1)
+  WHERE id = category_id;
+END;
+$$ LANGUAGE plpgsql;
+
