@@ -1,11 +1,6 @@
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../config/supabase';
 import { IPayment } from './payments.model';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || ''
-);
 
 // Lazy Razorpay getter — only instantiate when keys are available
 let _razorpay: any = null;

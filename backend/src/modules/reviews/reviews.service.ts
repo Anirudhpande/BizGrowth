@@ -1,10 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../config/supabase';
 import { IReview } from './reviews.model';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || ''
-);
 
 const REVIEWS_TABLE = 'reviews';
 

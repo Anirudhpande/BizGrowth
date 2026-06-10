@@ -1,11 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../config/supabase';
 import { ICategory } from './categories.model';
 import { IConsultantCategory } from './consultant-categories.model';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || ''
-);
 
 const CATEGORIES_TABLE = 'categories';
 const CONSULTANT_CATEGORIES_TABLE = 'consultant_categories';
