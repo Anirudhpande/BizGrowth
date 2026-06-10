@@ -200,7 +200,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer (Drop-down) */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-surface border-b border-outline-variant/30 shadow-lg px-margin-mobile py-6 flex flex-col gap-3 animate-fade-in-up">
+        <div className="md:hidden absolute top-full left-0 w-full bg-surface border-b border-outline-variant/30 shadow-lg px-margin-mobile py-6 flex flex-col gap-3 animate-fade-in-up max-h-[calc(100vh-5rem)] overflow-y-auto z-50">
           <NavLink 
             to="/ecosystem" 
             onClick={() => setIsMobileMenuOpen(false)}
