@@ -101,8 +101,9 @@ export default function ListingForm() {
         result = await api.post('/api/marketplace', payload);
       }
 
-      if (result && result.id) {
-        navigate(`/marketplace/${result.id}`);
+      const listingData = result?.data || result;
+      if (listingData && listingData.id) {
+        navigate(`/marketplace/${listingData.id}`);
       } else {
         throw new Error('No listing ID returned in response.');
       }

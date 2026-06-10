@@ -20,13 +20,13 @@ export default function Ecosystem() {
             </p>
             <div className="flex justify-center gap-4">
               <Link
-                to="/register"
+                to="/marketplace"
                 className="bg-secondary text-on-secondary font-label-md text-label-md px-8 py-4 rounded-lg hover:bg-on-secondary-fixed hover:text-on-secondary transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-1"
               >
                 Explore Marketplace
               </Link>
               <Link
-                to="/register"
+                to="/consultants"
                 className="bg-surface-container-lowest/80 backdrop-blur-sm text-primary border border-outline-variant font-label-md text-label-md px-8 py-4 rounded-lg hover:bg-surface-container-low transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 Find a Consultant
@@ -86,7 +86,7 @@ export default function Ecosystem() {
                 <p className="font-body-md text-body-md text-on-surface-variant">Curated opportunities for growth and partnership.</p>
               </div>
               <Link
-                to="/register"
+                to="/marketplace"
                 className="hidden md:flex items-center gap-2 text-secondary font-label-md text-label-md hover:underline bg-surface-container-low px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all"
               >
                 View All Categories <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -179,7 +179,7 @@ export default function Ecosystem() {
                 <p className="font-body-md text-body-md text-on-surface-variant">Closed-door C-suite summits and physical networking events.</p>
               </div>
               <Link
-                to="/register"
+                to="/events"
                 className="hidden md:flex items-center gap-2 text-secondary font-label-md text-label-md hover:underline bg-surface-container-low px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all"
               >
                 Request Invitation <span className="material-symbols-outlined text-sm">arrow_forward</span>
