@@ -18,10 +18,13 @@ import adminRoutes from './modules/admin/admin.routes';
 import {
   bookingsRouter,
   reviewsRouter,
+  eventReviewsRouter,
   categoriesRouter,
   paymentsRouter,
   notificationsRouter,
   availabilityRouter,
+  messagesRouter,
+  portfolioRouter,
 } from './modules';
 
 // Middleware imports
@@ -123,10 +126,13 @@ app.use('/api/admin', adminRoutes);
 // Phase 2 & 3 Routes (NOW MOUNTED)
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/reviews', reviewsRouter);
+app.use('/api/event-reviews', eventReviewsRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/availability', availabilityRouter);
+app.use('/api/messages', messagesRouter);
+app.use('/api/portfolio', portfolioRouter);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {
