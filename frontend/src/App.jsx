@@ -25,6 +25,7 @@ import EventForm from './pages/EventForm'
 import ConsultantDiscovery from './pages/ConsultantDiscovery'
 import ConsultantProfileDetail from './pages/ConsultantProfileDetail'
 import ConsultantSetup from './pages/ConsultantSetup'
+import Messages from './pages/Messages'
 import './App.css'
 
 export default function App() {
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="/resources/new" element={<ResourceForm />} />
             <Route path="/resources/:id/edit" element={<ResourceForm />} />
             <Route path="/consultants/setup" element={<ConsultantSetup />} />
+            <Route path="/messages" element={<Messages />} />
           </Route>
 
           {/* Admin Routes Infrastructure */}

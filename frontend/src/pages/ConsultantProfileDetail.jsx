@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import BookingFlowModal from '../components/BookingFlowModal';
@@ -8,11 +8,14 @@ import PaymentModal from '../components/PaymentModal';
 export default function ConsultantProfileDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const [profile, setProfile] = useState(null);
   const [services, setServices] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState(null);
+  const [portfolio, setPortfolio] = useState([]);
+  const [activeTab, setActiveTab] = useState('services');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -60,6 +63,16 @@ export default function ConsultantProfileDetail() {
         }
       } catch (e) {
         console.warn('Stats fetch failed:', e);
+      }
+
+      // 5. Fetch portfolio
+      try {
+        const portRes = await api.get(`/api/portfolio/consultant/${id}`);
+        if (portRes?.success) {
+          setPortfolio(portRes.data || []);
+        }
+      } catch (e) {
+        console.warn('Portfolio fetch failed:', e);
       }
 
     } catch (err) {
@@ -144,11 +157,24 @@ export default function ConsultantProfileDetail() {
                 </div>
               </div>
               
-              <div className="bg-surface border border-outline-variant/30 px-5 py-3 rounded-2xl text-center self-stretch sm:self-auto flex flex-col justify-center min-w-[120px]">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Hourly Rate</span>
-                <span className="font-headline-md text-headline-md font-bold text-secondary mt-0.5">
-                  {profile.currency || 'INR'} {profile.hourly_rate ? parseFloat(profile.hourly_rate).toFixed(0) : 'Free'}
-                </span>
+              <div className="flex items-center gap-3">
+                {/* Message button */}
+                {user && user.userId !== profile?.user_id && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/messages?recipient=${profile.user_id}`)}
+                    className="flex items-center gap-1.5 bg-surface-container border border-outline-variant/40 text-primary hover:bg-surface-container-high font-bold text-body-sm px-4 py-2 rounded-full transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">chat</span>
+                    Message
+                  </button>
+                )}
+                <div className="bg-surface border border-outline-variant/30 px-5 py-3 rounded-2xl text-center flex flex-col justify-center min-w-[120px]">
+                  <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Hourly Rate</span>
+                  <span className="font-headline-md text-headline-md font-bold text-secondary mt-0.5">
+                    {profile.currency || 'INR'} {profile.hourly_rate ? parseFloat(profile.hourly_rate).toFixed(0) : 'Free'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -186,9 +212,35 @@ export default function ConsultantProfileDetail() {
             </div>
           </div>
 
-          {/* Services Offered Section */}
-          <div className="space-y-4">
-            <h3 className="font-headline-md text-headline-md text-primary font-bold">Consulting Services</h3>
+          {/* Tab Navigation */}
+          <div className="flex border-b border-outline-variant/20 gap-1">
+            {[
+              { key: 'services', label: 'Services', icon: 'work' },
+              { key: 'portfolio', label: 'Portfolio', icon: 'folder_open' },
+              { key: 'reviews', label: 'Reviews', icon: 'star' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                id={`tab-${tab.key}`}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-5 py-3 text-body-sm font-semibold transition-colors border-b-2 -mb-px ${
+                  activeTab === tab.key
+                    ? 'text-secondary border-secondary'
+                    : 'text-on-surface-variant border-transparent hover:text-primary'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                {tab.label}
+                {tab.key === 'reviews' && reviews.length > 0 && (
+                  <span className="ml-0.5 bg-secondary/10 text-secondary text-xs font-bold px-1.5 py-0.5 rounded-full">{reviews.length}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Services Tab */}
+          {activeTab === 'services' && (
+            <div className="space-y-4">
             {services.length === 0 ? (
               <div className="text-center py-10 text-on-surface-variant bg-surface-container-low border border-outline-variant/30 rounded-2xl">
                 <p className="text-body-sm font-medium">No active packages offered by this consultant.</p>
@@ -230,41 +282,83 @@ export default function ConsultantProfileDetail() {
               </div>
             )}
           </div>
+          )}
 
-          {/* Client Reviews Section */}
-          <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-6">
-            <h3 className="font-headline-md text-headline-md text-primary font-bold">Client Feedback & Reviews</h3>
-            
-            {reviews.length === 0 ? (
-              <p className="text-body-sm text-on-surface-variant font-medium py-4">No reviews recorded for this consultant.</p>
-            ) : (
-              <div className="divide-y divide-outline-variant/15">
-                {reviews.map((rev) => (
-                  <div key={rev.id} className="py-4 space-y-2 text-body-sm">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex text-tertiary">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <span 
-                              key={i} 
-                              className={`material-symbols-outlined text-[18px] ${i < rev.rating ? 'icon-fill' : ''}`}
-                            >
-                              star
-                            </span>
-                          ))}
+          {/* Portfolio Tab */}
+          {activeTab === 'portfolio' && (
+            <div className="space-y-4">
+              {portfolio.length === 0 ? (
+                <div className="text-center py-12 text-on-surface-variant bg-surface-container-low border border-outline-variant/30 rounded-2xl">
+                  <span className="material-symbols-outlined text-[40px] text-on-surface-variant/30 block mb-2">folder_open</span>
+                  <p className="text-body-sm font-medium">No portfolio items showcased yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {portfolio.map((item) => (
+                    <div key={item.id} className="bg-surface-container-low border border-outline-variant/30 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+                      {item.imageUrl && (
+                        <div className="w-full h-40 bg-surface-container-high overflow-hidden">
+                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                         </div>
-                        <span className="font-bold text-primary">{rev.title}</span>
+                      )}
+                      <div className="p-5 space-y-2">
+                        <h4 className="font-bold text-primary text-body-md">{item.title}</h4>
+                        {item.description && (
+                          <p className="text-body-sm text-on-surface-variant/85 line-clamp-3">{item.description}</p>
+                        )}
+                        {item.projectUrl && (
+                          <a
+                            href={item.projectUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-secondary text-body-sm font-semibold hover:underline mt-1"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                            View Project
+                          </a>
+                        )}
                       </div>
-                      <span className="text-xs text-on-surface-variant/60">
-                        {new Date(rev.created_at).toLocaleDateString()}
-                      </span>
                     </div>
-                    <p className="text-on-surface-variant/90 leading-relaxed">{rev.comment}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reviews Tab */}
+          {activeTab === 'reviews' && (
+            <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-6">
+              {reviews.length === 0 ? (
+                <p className="text-body-sm text-on-surface-variant font-medium py-4">No reviews recorded for this consultant.</p>
+              ) : (
+                <div className="divide-y divide-outline-variant/15">
+                  {reviews.map((rev) => (
+                    <div key={rev.id} className="py-4 space-y-2 text-body-sm">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex text-tertiary">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <span 
+                                key={i} 
+                                className={`material-symbols-outlined text-[18px] ${i < rev.rating ? 'icon-fill' : ''}`}
+                              >
+                                star
+                              </span>
+                            ))}
+                          </div>
+                          <span className="font-bold text-primary">{rev.title}</span>
+                        </div>
+                        <span className="text-xs text-on-surface-variant/60">
+                          {new Date(rev.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-on-surface-variant/90 leading-relaxed">{rev.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
 

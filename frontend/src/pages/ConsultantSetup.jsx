@@ -33,6 +33,14 @@ export default function ConsultantSetup() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Portfolio Items State
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [portLoading, setPortLoading] = useState(false);
+  const [showPortForm, setShowPortForm] = useState(false);
+  const [portFormData, setPortFormData] = useState({ title: '', description: '', projectUrl: '', imageUrl: '' });
+  const [portSubmitting, setPortSubmitting] = useState(false);
+  const [portEditId, setPortEditId] = useState(null);
+
   const daysOfWeekNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   useEffect(() => {
@@ -99,6 +107,22 @@ export default function ConsultantSetup() {
     if (user) {
       fetchProfileAndAvailability();
     }
+  }, [user]);
+
+  // Fetch portfolio items
+  const loadPortfolio = async () => {
+    setPortLoading(true);
+    try {
+      const res = await api.get('/api/portfolio/my');
+      if (res?.success) setPortfolioItems(res.data || []);
+    } catch (_) {} finally {
+      setPortLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) loadPortfolio();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleSlotChange = (dayIndex, field, value) => {
@@ -168,6 +192,48 @@ export default function ConsultantSetup() {
       setError(err.message || 'Onboarding failed. Please check your inputs.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openPortForm = (item = null) => {
+    if (item) {
+      setPortEditId(item.id);
+      setPortFormData({ title: item.title, description: item.description || '', projectUrl: item.projectUrl || '', imageUrl: item.imageUrl || '' });
+    } else {
+      setPortEditId(null);
+      setPortFormData({ title: '', description: '', projectUrl: '', imageUrl: '' });
+    }
+    setShowPortForm(true);
+  };
+
+  const closePortForm = () => { setShowPortForm(false); setPortEditId(null); };
+
+  const handlePortSave = async (e) => {
+    e.preventDefault();
+    if (!portFormData.title.trim()) return;
+    setPortSubmitting(true);
+    try {
+      if (portEditId) {
+        await api.put(`/api/portfolio/${portEditId}`, portFormData);
+      } else {
+        await api.post('/api/portfolio', portFormData);
+      }
+      closePortForm();
+      await loadPortfolio();
+    } catch (err) {
+      console.error('Portfolio save failed:', err);
+    } finally {
+      setPortSubmitting(false);
+    }
+  };
+
+  const handlePortDelete = async (itemId) => {
+    if (!window.confirm('Delete this portfolio item?')) return;
+    try {
+      await api.delete(`/api/portfolio/${itemId}`);
+      await loadPortfolio();
+    } catch (err) {
+      console.error('Portfolio delete failed:', err);
     }
   };
 
@@ -362,6 +428,59 @@ export default function ConsultantSetup() {
             ))}
           </div>
 
+          {/* ── Portfolio Items Section ── */}
+          <div className="border-t border-outline-variant/15 pt-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-primary text-body-lg">3. Portfolio Items</h3>
+              <button
+                type="button"
+                id="add-portfolio-btn"
+                onClick={() => openPortForm()}
+                className="flex items-center gap-1.5 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold text-body-sm px-4 py-2 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                Add Item
+              </button>
+            </div>
+
+            {portLoading ? (
+              <div className="flex items-center gap-2 py-4 text-on-surface-variant">
+                <div className="w-4 h-4 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
+                <span className="text-body-sm">Loading portfolio…</span>
+              </div>
+            ) : portfolioItems.length === 0 ? (
+              <div className="text-center py-8 bg-surface-container rounded-xl border border-outline-variant/20">
+                <span className="material-symbols-outlined text-[36px] text-on-surface-variant/30 block mb-1">folder_open</span>
+                <p className="text-body-sm text-on-surface-variant">No portfolio items yet. Add projects to showcase your work.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {portfolioItems.map((item) => (
+                  <div key={item.id} className="bg-surface-container border border-outline-variant/20 rounded-xl p-4 flex gap-3">
+                    {item.imageUrl && (
+                      <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-lg shrink-0 bg-surface-container-high" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-primary text-body-sm truncate">{item.title}</p>
+                      {item.description && <p className="text-xs text-on-surface-variant/80 line-clamp-2 mt-0.5">{item.description}</p>}
+                      {item.projectUrl && (
+                        <a href={item.projectUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-secondary hover:underline truncate block mt-1">{item.projectUrl}</a>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <button type="button" onClick={() => openPortForm(item)} className="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-primary transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button type="button" onClick={() => handlePortDelete(item.id)} className="p-1.5 rounded-lg hover:bg-error-container text-on-surface-variant hover:text-error transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3 justify-end pt-4 border-t border-outline-variant/15">
             <Link
               to="/dashboard"
@@ -386,6 +505,81 @@ export default function ConsultantSetup() {
           </div>
         </form>
       </div>
+
+      {/* Portfolio Item Modal */}
+      {showPortForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-surface w-full max-w-lg rounded-2xl shadow-2xl border border-outline-variant/30 overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-outline-variant/20">
+              <h2 className="font-bold text-primary text-body-md">{portEditId ? 'Edit Portfolio Item' : 'Add Portfolio Item'}</h2>
+              <button onClick={closePortForm} className="text-on-surface-variant hover:text-primary p-1.5 rounded-full hover:bg-surface-container-low transition-colors">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <form onSubmit={handlePortSave} className="p-6 space-y-4">
+              <div>
+                <label htmlFor="port-title" className="block text-body-sm font-bold text-primary mb-1.5">Title *</label>
+                <input
+                  id="port-title"
+                  type="text"
+                  required
+                  value={portFormData.title}
+                  onChange={(e) => setPortFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g. Fundraising Pitch Deck for XYZ Startup"
+                  className="w-full bg-surface-container border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                />
+              </div>
+              <div>
+                <label htmlFor="port-desc" className="block text-body-sm font-bold text-primary mb-1.5">Description</label>
+                <textarea
+                  id="port-desc"
+                  rows={3}
+                  value={portFormData.description}
+                  onChange={(e) => setPortFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Briefly describe the project, your role, and outcomes achieved…"
+                  className="w-full bg-surface-container border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all resize-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="port-url" className="block text-body-sm font-bold text-primary mb-1.5">Project URL</label>
+                <input
+                  id="port-url"
+                  type="url"
+                  value={portFormData.projectUrl}
+                  onChange={(e) => setPortFormData(prev => ({ ...prev, projectUrl: e.target.value }))}
+                  placeholder="https://github.com/yourproject or https://case-study.example.com"
+                  className="w-full bg-surface-container border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                />
+              </div>
+              <div>
+                <label htmlFor="port-img" className="block text-body-sm font-bold text-primary mb-1.5">Cover Image URL</label>
+                <input
+                  id="port-img"
+                  type="url"
+                  value={portFormData.imageUrl}
+                  onChange={(e) => setPortFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                  placeholder="https://example.com/project-screenshot.png"
+                  className="w-full bg-surface-container border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                />
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button type="button" onClick={closePortForm} className="border border-outline text-primary px-5 py-2.5 rounded-full font-bold text-body-sm hover:bg-surface-container-high transition-all">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={portSubmitting}
+                  className="bg-secondary text-white hover:bg-secondary/90 px-6 py-2.5 rounded-full font-bold text-body-sm transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {portSubmitting ? (
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving…</>
+                  ) : (portEditId ? 'Update Item' : 'Add Item')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

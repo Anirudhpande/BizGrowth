@@ -133,6 +133,18 @@ export default function Navbar() {
               >
                 My Organizations
               </NavLink>
+              <NavLink 
+                to="/messages" 
+                className={({ isActive }) => 
+                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
+                    isActive 
+                      ? 'text-secondary font-bold border-secondary' 
+                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  }`
+                }
+              >
+                Messages
+              </NavLink>
               {user?.role === 'admin' && (
                 <NavLink 
                   to="/admin" 
@@ -299,6 +311,19 @@ export default function Navbar() {
                   }
                 >
                   My Organizations
+                </NavLink>
+                <NavLink 
+                  to="/messages" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => 
+                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 ${
+                      isActive 
+                        ? 'border-secondary text-secondary font-bold' 
+                        : 'border-outline text-primary hover:bg-surface-container-low'
+                    }`
+                  }
+                >
+                  Messages
                 </NavLink>
                 {user?.role === 'admin' && (
                   <NavLink 
