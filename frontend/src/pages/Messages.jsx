@@ -67,10 +67,26 @@ export default function Messages() {
     try {
       const res = await api.get('/api/messages/conversations');
       if (res?.success) setConversations(res.data || []);
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, []);
 
+  /* ── open or create conversation ── */
+  const openOrCreateConversation = useCallback(async (recipientId) => {
+    try {
+      const res = await api.post('/api/messages/conversations', { recipientId });
+      if (res?.success && res.data) {
+        setActiveConv(res.data);
+        setMobileThread(true);
+        // refresh conversation list
+        await loadConversations();
+      }
+    } catch (e) {
+      console.error('Failed to open conversation', e);
+    }
+  }, [loadConversations]);
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConvsLoading(true);
     loadConversations().finally(() => setConvsLoading(false));
   }, [loadConversations]);
@@ -79,10 +95,10 @@ export default function Messages() {
   useEffect(() => {
     const recipientId = searchParams.get('recipient');
     if (recipientId && user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       openOrCreateConversation(recipientId);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, user]);
+  }, [searchParams, user, openOrCreateConversation]);
 
   /* ── load messages for active conversation ── */
   const loadMessages = useCallback(async (convId) => {
@@ -92,7 +108,7 @@ export default function Messages() {
       if (res?.success) {
         setMessages(res.data || []);
       }
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, []);
 
   /* ── poll messages ── */
@@ -100,6 +116,7 @@ export default function Messages() {
     if (pollRef.current) clearInterval(pollRef.current);
     if (!activeConv) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMsgLoading(true);
     loadMessages(activeConv.id).finally(() => setMsgLoading(false));
 
@@ -120,21 +137,6 @@ export default function Messages() {
   useEffect(() => {
     if (activeConv) setTimeout(() => inputRef.current?.focus(), 100);
   }, [activeConv]);
-
-  /* ── open or create conversation ── */
-  const openOrCreateConversation = async (recipientId) => {
-    try {
-      const res = await api.post('/api/messages/conversations', { recipientId });
-      if (res?.success && res.data) {
-        setActiveConv(res.data);
-        setMobileThread(true);
-        // refresh conversation list
-        await loadConversations();
-      }
-    } catch (e) {
-      console.error('Failed to open conversation', e);
-    }
-  };
 
   /* ── select existing conversation ── */
   const selectConversation = (conv) => {
@@ -157,7 +159,7 @@ export default function Messages() {
         // refresh sidebar last message
         loadConversations();
       }
-    } catch (_) {} finally {
+    } catch { /* ignore */ } finally {
       setSending(false);
     }
   };
@@ -168,7 +170,7 @@ export default function Messages() {
     try {
       const res = await api.get('/api/messages/users');
       if (res?.success) setUsers(res.data || []);
-    } catch (_) {} finally {
+    } catch { /* ignore */ } finally {
       setUsersLoading(false);
     }
   };

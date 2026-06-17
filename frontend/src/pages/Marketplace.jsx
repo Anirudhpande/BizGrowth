@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +19,7 @@ export default function Marketplace() {
   const industries = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Marketing', 'Consulting', 'Other'];
   const types = ['sell', 'buy', 'partner', 'supplier', 'investor'];
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -47,11 +47,12 @@ export default function Marketplace() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, industry, type, page]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchListings();
-  }, [search, industry, type, page]);
+  }, [fetchListings]);
 
   return (
     <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-8 space-y-8">

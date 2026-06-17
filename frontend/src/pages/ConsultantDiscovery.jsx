@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 
@@ -13,7 +13,7 @@ export default function ConsultantDiscovery() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchConsultants = async () => {
+  const fetchConsultants = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -37,11 +37,12 @@ export default function ConsultantDiscovery() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, availability, page]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchConsultants();
-  }, [search, availability, page]);
+  }, [fetchConsultants]);
 
   return (
     <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-8 space-y-8">

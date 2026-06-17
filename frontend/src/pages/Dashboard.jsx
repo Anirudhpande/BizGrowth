@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import PaymentModal from '../components/PaymentModal';
@@ -7,7 +7,6 @@ import ReviewModal from '../components/ReviewModal';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
 
   // Consultant Profile State
@@ -47,7 +46,7 @@ export default function Dashboard() {
       if (profile && profile.id) {
         setConsultantProfile(profile);
       }
-    } catch (err) {
+    } catch {
       // Not a consultant or request failed
       setConsultantProfile(null);
     } finally {
@@ -109,11 +108,13 @@ export default function Dashboard() {
   }, [user, consultantProfile]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkConsultantProfile();
   }, [checkConsultantProfile]);
 
   useEffect(() => {
     if (!loadingProfile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadTabData(activeTab);
     }
   }, [activeTab, loadingProfile, loadTabData]);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +25,7 @@ export default function ConsultantProfileDetail() {
   const [unpaidBooking, setUnpaidBooking] = useState(null);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
-  const fetchProfileDetails = async () => {
+  const fetchProfileDetails = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -81,11 +81,12 @@ export default function ConsultantProfileDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfileDetails();
-  }, [id]);
+  }, [fetchProfileDetails]);
 
   if (loading) {
     return (

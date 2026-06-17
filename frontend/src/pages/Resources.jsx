@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +20,7 @@ export default function Resources() {
   const contentTypes = ['Article', 'Guide', 'Template', 'Checklist', 'Video'];
   const industries = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Marketing', 'Consulting', 'Other'];
 
-  const fetchContent = async () => {
+  const fetchContent = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -46,11 +46,12 @@ export default function Resources() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, type, industry, page]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchContent();
-  }, [search, type, industry, page]);
+  }, [fetchContent]);
 
   return (
     <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-8 space-y-8">

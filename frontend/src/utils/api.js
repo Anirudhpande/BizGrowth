@@ -51,7 +51,7 @@ async function request(path, options = {}) {
     let data;
     try {
       data = await response.json();
-    } catch (err) {
+    } catch {
       // Handle cases where the server returns a non-JSON success or error
       data = { success: response.ok, message: 'Response parsing failed' };
     }
@@ -71,26 +71,22 @@ async function request(path, options = {}) {
         }
 
         if (isRefreshing) {
+          const newToken = await new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          });
+          // Update Authorization header and retry
+          config.headers['Authorization'] = `Bearer ${newToken}`;
+          const retryResponse = await fetch(`${API_URL}${path}`, config);
+          let retryData;
           try {
-            const newToken = await new Promise((resolve, reject) => {
-              failedQueue.push({ resolve, reject });
-            });
-            // Update Authorization header and retry
-            config.headers['Authorization'] = `Bearer ${newToken}`;
-            const retryResponse = await fetch(`${API_URL}${path}`, config);
-            let retryData;
-            try {
-              retryData = await retryResponse.json();
-            } catch (err) {
-              retryData = { success: retryResponse.ok, message: 'Response parsing failed' };
-            }
-            if (!retryResponse.ok) {
-              throwError(retryResponse, retryData);
-            }
-            return retryData;
-          } catch (err) {
-            throw err;
+            retryData = await retryResponse.json();
+          } catch {
+            retryData = { success: retryResponse.ok, message: 'Response parsing failed' };
           }
+          if (!retryResponse.ok) {
+            throwError(retryResponse, retryData);
+          }
+          return retryData;
         }
 
         isRefreshing = true;
@@ -125,7 +121,7 @@ async function request(path, options = {}) {
             let retryData;
             try {
               retryData = await retryResponse.json();
-            } catch (err) {
+            } catch {
               retryData = { success: retryResponse.ok, message: 'Response parsing failed' };
             }
             if (!retryResponse.ok) {
@@ -151,7 +147,7 @@ async function request(path, options = {}) {
     // Standardize network/fetch errors
     if (!error.status) {
       console.error(`API Network Error for ${path}:`, error);
-      throw new Error('Network connection error. Please check if backend is running.');
+      throw new Error('Network connection error. Please check if backend is running.', { cause: error });
     }
     throw error;
   }

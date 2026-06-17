@@ -82,6 +82,7 @@ export function AuthProvider({ children }) {
   }, [refreshAccessToken]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     verifyToken();
   }, [verifyToken]);
 
@@ -118,8 +119,6 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true);
       }
       return data;
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }
@@ -136,8 +135,6 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true);
       }
       return data;
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }
@@ -168,6 +165,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
