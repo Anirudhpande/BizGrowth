@@ -51,12 +51,15 @@ export default function Navbar() {
   }, [])
 
   useEffect(() => {
-    checkAuth()
-    
-    // Listen to local storage changes to trigger auth check in real-time
-    window.addEventListener('storage', checkAuth)
-    return () => window.removeEventListener('storage', checkAuth)
-  }, [])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  checkAuth()
+
+  window.addEventListener('storage', checkAuth)
+
+  return () => {
+    window.removeEventListener('storage', checkAuth)
+  }
+}, [])
 
   return (
     <nav 
