@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,7 @@ export default function EventDetail() {
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -56,11 +56,12 @@ export default function EventDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-  }, [id, user]);
+  }, [fetchData]);
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this event?')) return;

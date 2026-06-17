@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +18,7 @@ export default function Events() {
 
   const eventTypes = ['Webinar', 'Workshop', 'Networking', 'Conference', 'Other'];
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -42,11 +42,12 @@ export default function Events() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, type, page]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
-  }, [search, type, page]);
+  }, [fetchEvents]);
 
   return (
     <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-8 space-y-8">

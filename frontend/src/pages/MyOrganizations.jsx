@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../utils/api'
 
@@ -9,7 +9,7 @@ export default function MyOrganizations() {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -24,11 +24,12 @@ export default function MyOrganizations() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrganizations()
-  }, [])
+  }, [fetchOrganizations])
 
   const handleDelete = async (id) => {
     setError('')

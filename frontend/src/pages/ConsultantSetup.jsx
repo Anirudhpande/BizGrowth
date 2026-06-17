@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -57,7 +57,7 @@ export default function ConsultantSetup() {
           } else if (profRes && profRes.id) {
             existingProfile = profRes;
           }
-        } catch (e) {
+        } catch {
           // Profile not created yet (404)
         }
 
@@ -110,20 +110,22 @@ export default function ConsultantSetup() {
   }, [user]);
 
   // Fetch portfolio items
-  const loadPortfolio = async () => {
+  const loadPortfolio = useCallback(async () => {
     setPortLoading(true);
     try {
       const res = await api.get('/api/portfolio/my');
       if (res?.success) setPortfolioItems(res.data || []);
-    } catch (_) {} finally {
+    } catch { /* portfolio load failed */ } finally {
       setPortLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (user) loadPortfolio();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadPortfolio();
+    }
+  }, [user, loadPortfolio]);
 
   const handleSlotChange = (dayIndex, field, value) => {
     setWeeklySlots(prev => prev.map((s, idx) => {
@@ -176,7 +178,7 @@ export default function ConsultantSetup() {
         // Try updating slots
         try {
           await api.put(`/api/availability/${user.id}/slots`, { slots: weeklySlots });
-        } catch (updateErr) {
+        } catch {
           // If update fail (availability does not exist yet), call create post
           await api.post('/api/availability', availPayload);
         }

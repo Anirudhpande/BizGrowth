@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,7 @@ export default function ResourceDetail() {
   
   const [publishing, setPublishing] = useState(false);
 
-  const fetchResource = async () => {
+  const fetchResource = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -30,11 +30,12 @@ export default function ResourceDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchResource();
-  }, [id]);
+  }, [fetchResource]);
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this article?')) return;

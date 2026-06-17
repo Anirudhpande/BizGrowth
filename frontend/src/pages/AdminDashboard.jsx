@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../utils/api'
 
@@ -12,7 +12,7 @@ export default function AdminDashboard() {
   const [deletingId, setDeletingId] = useState(null)
   const [updatingId, setUpdatingId] = useState(null)
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -27,11 +27,12 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers()
-  }, [])
+  }, [fetchUsers])
 
   const handleRoleChange = async (targetUserId, newRole) => {
     setError('')
