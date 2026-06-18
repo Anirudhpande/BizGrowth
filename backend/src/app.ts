@@ -25,6 +25,7 @@ import {
   availabilityRouter,
   messagesRouter,
   portfolioRouter,
+  analyticsRouter,
 } from './modules';
 
 // Middleware imports
@@ -133,6 +134,7 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/portfolio', portfolioRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {

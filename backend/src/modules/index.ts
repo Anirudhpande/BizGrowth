@@ -10,12 +10,12 @@ export {
   categoriesRouter,
   eventReviewsRouter,
 };
-// Phase 3 - Monetization & Engagement Modules
 import paymentsRouter from './payments/payments.route';
 import notificationsRouter from './notifications/notifications.route';
 import availabilityRouter from './availability/availability.route';
 import messagesRouter from './messages/messages.routes';
 import portfolioRouter from './portfolio/portfolio.routes';
+import analyticsRouter from './analytics/analytics.routes';
 
 export {
   paymentsRouter,
@@ -23,5 +23,7 @@ export {
   availabilityRouter,
   messagesRouter,
   portfolioRouter,
+  analyticsRouter,
 };
+
 
