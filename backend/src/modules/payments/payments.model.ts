@@ -1,8 +1,9 @@
 export interface IPayment {
   id?: string;
-  booking_id: string;
-  consultant_id: string;
-  client_id: string;
+  booking_id?: string | null;
+  listing_id?: string | null;
+  consultant_id: string; // Used as recipient / seller for listing sales
+  client_id: string; // Used as buyer for listing sales
   amount: number;
   currency: string;
   razorpay_order_id: string;

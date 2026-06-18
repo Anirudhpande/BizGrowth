@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
+import db from '../../config/db';
 
 const paymentsService = new PaymentsService();
 
@@ -183,6 +184,101 @@ export class PaymentsController {
       res.json({ message: 'Payment refunded successfully', refund });
     } catch (error) {
       res.status(500).json({ error: `Refund failed: ${error}` });
+    }
+  }
+
+  /**
+   * POST /api/payments/create-listing-order
+   * Create Razorpay order for purchasing a product listing
+   */
+  async createListingOrder(req: Request, res: Response): Promise<void> {
+    try {
+      const { listingId, amount, currency } = req.body;
+      const buyerId = (req as any).user?.userId; // Set by authenticate middleware
+
+      if (!listingId || !amount || !buyerId) {
+        res.status(400).json({ error: 'Missing listingId, amount, or buyer details' });
+        return;
+      }
+
+      // 1. Fetch listing details to verify type is 'sell' and get seller_id (user_id)
+      const listingRes = await db.query(
+        `SELECT user_id, type FROM public.listings WHERE id = $1 LIMIT 1`,
+        [listingId]
+      );
+
+      if (listingRes.rows.length === 0) {
+        res.status(404).json({ error: 'Marketplace listing not found' });
+        return;
+      }
+
+      const listing = listingRes.rows[0];
+      if (listing.type !== 'sell') {
+        res.status(400).json({ error: 'This listing is not available for purchase (must be type: sell)' });
+        return;
+      }
+
+      const sellerId = listing.user_id;
+      if (sellerId === buyerId) {
+        res.status(400).json({ error: 'You cannot purchase your own product listing' });
+        return;
+      }
+
+      // Create Razorpay order
+      const order = await paymentsService.createListingOrder(
+        listingId,
+        sellerId,
+        buyerId,
+        parseFloat(amount.toString()),
+        currency || 'INR'
+      );
+
+      res.status(201).json(order);
+    } catch (error) {
+      console.error('Error creating listing order:', error);
+      res.status(500).json({ error: `Failed to create listing order: ${(error as Error).message}` });
+    }
+  }
+
+  /**
+   * POST /api/payments/verify-listing-payment
+   * Verify listing product payment signature and capture sale
+   */
+  async verifyListingPayment(req: Request, res: Response): Promise<void> {
+    try {
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+
+      if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+        res.status(400).json({ error: 'Missing payment details' });
+        return;
+      }
+
+      const isValid = paymentsService.verifyPaymentSignature(
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature
+      );
+
+      if (!isValid) {
+        res.status(400).json({ error: 'Invalid payment signature' });
+        return;
+      }
+
+      // Update payment status to completed
+      const payment = await paymentsService.updatePaymentAfterVerification(
+        razorpayOrderId,
+        razorpayPaymentId
+      );
+
+      if (!payment) {
+        res.status(404).json({ error: 'Payment record not found for this order ID' });
+        return;
+      }
+
+      res.json({ message: 'Product purchased successfully', payment });
+    } catch (error) {
+      console.error('Error verifying listing payment:', error);
+      res.status(500).json({ error: `Verification failed: ${(error as Error).message}` });
     }
   }
 }

@@ -65,6 +65,50 @@ export class PaymentsService {
   }
 
   /**
+   * Create Razorpay order for marketplace listing product purchase
+   */
+  async createListingOrder(
+    listingId: string,
+    sellerId: string,
+    buyerId: string,
+    amount: number,
+    currency: string = 'INR'
+  ): Promise<any> {
+    try {
+      const options = {
+        amount: amount * 100, // Convert to paise
+        currency,
+        receipt: `receipt_list_${listingId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+        notes: {
+          listingId,
+          sellerId,
+          buyerId,
+        },
+      };
+
+      const order = await getRazorpay().orders.create(options);
+
+      // Save payment record (using consultant_id as seller_id, client_id as buyer_id)
+      const { error } = await supabase.from(PAYMENTS_TABLE).insert([
+        {
+          listing_id: listingId,
+          consultant_id: sellerId,
+          client_id: buyerId,
+          amount,
+          currency,
+          razorpay_order_id: order.id,
+          status: 'pending',
+        },
+      ]);
+
+      if (error) throw error;
+      return order;
+    } catch (error) {
+      throw new Error(`Failed to create listing order: ${error}`);
+    }
+  }
+
+  /**
    * Verify payment signature
    */
   verifyPaymentSignature(
