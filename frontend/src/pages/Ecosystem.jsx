@@ -20,13 +20,13 @@ export default function Ecosystem() {
             </p>
             <div className="flex justify-center gap-4">
               <Link
-                to="/register"
+                to="/marketplace"
                 className="bg-secondary text-on-secondary font-label-md text-label-md px-8 py-4 rounded-lg hover:bg-on-secondary-fixed hover:text-on-secondary transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-1"
               >
                 Explore Marketplace
               </Link>
               <Link
-                to="/register"
+                to="/consultants"
                 className="bg-surface-container-lowest/80 backdrop-blur-sm text-primary border border-outline-variant font-label-md text-label-md px-8 py-4 rounded-lg hover:bg-surface-container-low transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 Find a Consultant
@@ -47,12 +47,12 @@ export default function Ecosystem() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-16">
               <img
                 alt="Abstract 3D business ecosystem visualization"
-                className="w-full h-[600px] object-cover"
+                className="w-full h-[300px] md:h-[600px] object-cover"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCs1z1IOhYpbTggvE8pjEv3QvLLRp_EpPjTy_boh_MavV5Oo22xwCt2e5PaKBWB9eQ0TB0tMLCmK5DqsgP-DaVNrq5ZsSyOw6DW5B4ESQ_5PYjaFICP9BbmpyswAwtBYmftQGiqkYRdxyECglxv0nvJ_kSFxE3Hoifa4illLeZn8V5gkxRPTX2v-0GUFxGh04jdrAEqEi797DyiGhFGeCR2BevM24CaMxNyQEVh3M0EHeagY_A0LVK2QhQXCr_Aoa_fP-8fueUAjw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 w-full p-12 flex flex-col items-center">
-                <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+              <div className="relative md:absolute md:bottom-0 md:left-0 w-full p-6 md:p-12 flex flex-col items-center bg-primary/80 md:bg-transparent">
+                <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full max-w-5xl">
                   {/* Corporates & Enterprises (Partnership Showcase) */}
                   <div className="glass-card bg-white/70 backdrop-blur-md border border-white/50 shadow-lg p-8 rounded-xl text-center group hover:shadow-xl hover:border-tertiary-container/30 hover:-translate-y-2 transition-all duration-300">
                     <span className="material-symbols-outlined text-5xl text-secondary mb-4 icon-fill group-hover:scale-110 transition-transform duration-300">domain</span>
@@ -86,13 +86,13 @@ export default function Ecosystem() {
                 <p className="font-body-md text-body-md text-on-surface-variant">Curated opportunities for growth and partnership.</p>
               </div>
               <Link
-                to="/register"
+                to="/marketplace"
                 className="hidden md:flex items-center gap-2 text-secondary font-label-md text-label-md hover:underline bg-surface-container-low px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all"
               >
                 View All Categories <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 auto-rows-[280px]">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 md:auto-rows-[280px]">
               {/* Large Feature Card (Partnership Showcase) */}
               <div className="md:col-span-2 md:row-span-2 glass-card bg-white/70 backdrop-blur-md border border-white/50 shadow-lg rounded-2xl p-10 relative overflow-hidden group cursor-pointer flex flex-col justify-between hover:shadow-xl hover:border-tertiary-container/30 hover:-translate-y-2 transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-fixed/40 via-transparent to-secondary-fixed/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
@@ -179,7 +179,7 @@ export default function Ecosystem() {
                 <p className="font-body-md text-body-md text-on-surface-variant">Closed-door C-suite summits and physical networking events.</p>
               </div>
               <Link
-                to="/register"
+                to="/events"
                 className="hidden md:flex items-center gap-2 text-secondary font-label-md text-label-md hover:underline bg-surface-container-low px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all"
               >
                 Request Invitation <span className="material-symbols-outlined text-sm">arrow_forward</span>
