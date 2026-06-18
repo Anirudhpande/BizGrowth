@@ -252,7 +252,7 @@ export default function ListingDetail() {
                       placeholder="Enter your message details, questions, or collaboration requests..."
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      className="w-full bg-surface border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all placeholder:text-on-surface-variant/40"
+                      className="w-full bg-surface border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all placeholder:text-on-surface-variant"
                     />
                     <button
                       type="submit"
@@ -296,7 +296,7 @@ export default function ListingDetail() {
           listing={listing}
           amount={listing.budget}
           onClose={() => setShowPayment(false)}
-          onSuccess={(payment) => {
+          onSuccess={() => {
             setShowPayment(false);
             setPurchaseSuccess(true);
           }}
