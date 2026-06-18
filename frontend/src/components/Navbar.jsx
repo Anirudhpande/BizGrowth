@@ -25,6 +25,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+
   return (
     <nav 
       className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-outline-variant/30 ${
