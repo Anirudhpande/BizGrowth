@@ -1,7 +1,11 @@
 import dotenv from 'dotenv';
+import dns from 'dns';
 
 // Load environment variables FIRST, before any other imports
 dotenv.config();
+
+// Force IPv4 resolution to prevent ENETUNREACH on IPv6 addresses
+dns.setDefaultResultOrder('ipv4first');
 
 import app from './app';
 import { verifyConnection } from './config/db';
