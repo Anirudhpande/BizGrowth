@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import db from '../../config/db';
+import { sendRealTimeUpdate } from '../../config/websocket';
 
 const qs = (val: any): string | undefined => Array.isArray(val) ? val[0] : val;
 
@@ -261,7 +262,13 @@ class MessagesController {
         [conversationId, currentUserId, textContent.trim()]
       );
 
-      res.status(201).json({ success: true, data: insertRes.rows[0] });
+      const message = insertRes.rows[0];
+      const recipientId = participant_one === currentUserId ? participant_two : participant_one;
+      
+      // Broadcast real-time message notification to the recipient
+      sendRealTimeUpdate(recipientId, 'new_message', message);
+
+      res.status(201).json({ success: true, data: message });
     } catch (error) {
       const err = error as any;
       res.status(500).json({ success: false, message: err.message || 'Failed to send message' });

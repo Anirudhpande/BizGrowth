@@ -1,17 +1,36 @@
 import { useState, useEffect } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../utils/api'
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
 
   const handleLogout = () => {
     logout()
     navigate('/')
   }
+
+  useEffect(() => {
+    if (!user) return
+    const fetchNotifications = async () => {
+      try {
+        const notifs = await api.get(`/api/notifications/user/${user.id}`)
+        const list = notifs?.notifications || []
+        const count = list.filter(n => !n.is_read).length
+        setUnreadNotifications(count)
+      } catch (err) {
+        console.error('Failed to load notifications in navbar:', err)
+      }
+    }
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [user])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -146,6 +165,18 @@ export default function Navbar() {
               >
                 Messages
               </NavLink>
+              <Link 
+                to="/dashboard?tab=notifications" 
+                className="relative p-2 text-on-surface-variant hover:text-primary transition-all mr-3 flex items-center"
+                title="Notifications"
+              >
+                <span className="material-symbols-outlined text-[24px]">notifications</span>
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-1 right-1 bg-error text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface">
+                    {unreadNotifications}
+                  </span>
+                )}
+              </Link>
               {user?.role === 'admin' && (
                 <NavLink 
                   to="/admin" 
@@ -325,6 +356,25 @@ export default function Navbar() {
                   }
                 >
                   Messages
+                </NavLink>
+                <NavLink 
+                  to="/dashboard?tab=notifications" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => 
+                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 flex items-center justify-center gap-1.5 ${
+                      isActive 
+                        ? 'border-secondary text-secondary font-bold' 
+                        : 'border-outline text-primary hover:bg-surface-container-low'
+                    }`
+                  }
+                >
+                  <span className="material-symbols-outlined text-[20px]">notifications</span>
+                  Notifications
+                  {unreadNotifications > 0 && (
+                    <span className="bg-error text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      {unreadNotifications}
+                    </span>
+                  )}
                 </NavLink>
                 {user?.role === 'admin' && (
                   <NavLink 

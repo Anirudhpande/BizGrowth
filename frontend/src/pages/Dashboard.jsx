@@ -1,13 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 import PaymentModal from '../components/PaymentModal';
 import ReviewModal from '../components/ReviewModal';
+import ImageUpload from '../components/ImageUpload';
+
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialTab = queryParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    if (tab) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   // Consultant Profile State
   const [consultantProfile, setConsultantProfile] = useState(null);
@@ -21,6 +34,25 @@ export default function Dashboard() {
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [myEvents, setMyEvents] = useState([]);
   const [myServices, setMyServices] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState(null);
+
+  // Availability States
+  const [weeklySlots, setWeeklySlots] = useState([]);
+  const [timezone, setTimezone] = useState('Asia/Kolkata');
+  const [maxConsultations, setMaxConsultations] = useState(10);
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [breakTimes, setBreakTimes] = useState([]);
+  const [newBlockedDate, setNewBlockedDate] = useState('');
+  const [newBreakStart, setNewBreakStart] = useState('12:00');
+  const [newBreakEnd, setNewBreakEnd] = useState('13:00');
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
+  // Portfolio States
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [showPortForm, setShowPortForm] = useState(false);
+  const [portEditId, setPortEditId] = useState(null);
+  const [portFormData, setPortFormData] = useState({ title: '', description: '', projectUrl: '', imageUrl: '' });
+  const [portSubmitting, setPortSubmitting] = useState(false);
   
   // Loading & Error States
   const [loadingData, setLoadingData] = useState(false);
@@ -98,6 +130,50 @@ export default function Dashboard() {
       } else if (tab === 'services' && consultantProfile) {
         const servRes = await api.get('/api/consultants/services/my');
         setMyServices(servRes?.data || []);
+      } else if (tab === 'analytics' && consultantProfile) {
+        const res = await api.get('/api/analytics/dashboard');
+        setAnalyticsData(res?.data || null);
+      } else if (tab === 'schedule' && consultantProfile) {
+        try {
+          const availRes = await api.get(`/api/availability/${user.id}`);
+          if (availRes) {
+            setTimezone(availRes.timezone || 'Asia/Kolkata');
+            setMaxConsultations(availRes.max_consultations_per_day || 10);
+            setBlockedDates(availRes.blocked_dates || []);
+            setBreakTimes(availRes.break_times || []);
+            
+            if (availRes.slots && Array.isArray(availRes.slots)) {
+              const mappedSlots = Array.from({ length: 7 }, (_, i) => {
+                const matched = availRes.slots.find(s => s.day_of_week === i);
+                return matched 
+                  ? { 
+                      day_of_week: i, 
+                      start_time: matched.start_time || '09:00', 
+                      end_time: matched.end_time || '17:00', 
+                      is_available: !!matched.is_available 
+                    }
+                  : { day_of_week: i, start_time: '09:00', end_time: '17:00', is_available: false };
+              });
+              setWeeklySlots(mappedSlots);
+            } else {
+              setWeeklySlots(Array.from({ length: 7 }, (_, i) => ({
+                day_of_week: i, start_time: '09:00', end_time: '17:00', is_available: false
+              })));
+            }
+          } else {
+            setWeeklySlots(Array.from({ length: 7 }, (_, i) => ({
+              day_of_week: i, start_time: '09:00', end_time: '17:00', is_available: false
+            })));
+          }
+        } catch (availErr) {
+          console.warn('No availability calendar found:', availErr);
+          setWeeklySlots(Array.from({ length: 7 }, (_, i) => ({
+            day_of_week: i, start_time: '09:00', end_time: '17:00', is_available: false
+          })));
+        }
+      } else if (tab === 'portfolio' && consultantProfile) {
+        const portRes = await api.get('/api/portfolio/my');
+        setPortfolioItems(portRes?.data || []);
       }
     } catch (err) {
       console.error(`Error loading data for tab ${tab}:`, err);
@@ -176,6 +252,117 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Failed to cancel booking:', err);
       alert('Error cancelling booking: ' + err.message);
+    }
+  };
+
+  // ---- Availability Actions ----
+  const handleSlotChange = (index, field, value) => {
+    setWeeklySlots(prev => prev.map((s, idx) => idx === index ? { ...s, [field]: value } : s));
+  };
+
+  const handleSaveSchedule = async (e) => {
+    e.preventDefault();
+    setSavingSchedule(true);
+    try {
+      const availPayload = {
+        consultantId: user.id,
+        slots: weeklySlots,
+        timezone,
+        maxConsultationsPerDay: parseInt(maxConsultations) || 10
+      };
+
+      try {
+        await api.put(`/api/availability/${user.id}/slots`, { slots: weeklySlots });
+      } catch {
+        await api.post('/api/availability', availPayload);
+      }
+      
+      await api.post('/api/availability', availPayload);
+      
+      alert('Availability settings updated successfully!');
+      loadTabData('schedule');
+    } catch (err) {
+      console.error('Failed to save availability settings:', err);
+      alert('Failed to save settings: ' + err.message);
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
+  const handleAddBlockedDate = async (e) => {
+    e.preventDefault();
+    if (!newBlockedDate) return;
+    try {
+      await api.post(`/api/availability/${user.id}/blocked-dates`, { dates: [newBlockedDate] });
+      setNewBlockedDate('');
+      loadTabData('schedule');
+    } catch (err) {
+      console.error('Failed to block date:', err);
+    }
+  };
+
+  const handleRemoveBlockedDate = async (dateStr) => {
+    try {
+      await api.delete(`/api/availability/${user.id}/blocked-dates/${dateStr}`);
+      loadTabData('schedule');
+    } catch (err) {
+      console.error('Failed to remove blocked date:', err);
+    }
+  };
+
+  const handleAddBreakTime = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post(`/api/availability/${user.id}/break-time`, { startTime: newBreakStart, endTime: newBreakEnd });
+      loadTabData('schedule');
+    } catch (err) {
+      console.error('Failed to add break time:', err);
+    }
+  };
+
+  // ---- Portfolio Actions ----
+  const openPortForm = (item = null) => {
+    if (item) {
+      setPortEditId(item.id);
+      setPortFormData({ title: item.title, description: item.description || '', projectUrl: item.projectUrl || '', imageUrl: item.imageUrl || '' });
+    } else {
+      setPortEditId(null);
+      setPortFormData({ title: '', description: '', projectUrl: '', imageUrl: '' });
+    }
+    setShowPortForm(true);
+  };
+
+  const closePortForm = () => {
+    setShowPortForm(false);
+    setPortEditId(null);
+  };
+
+  const handlePortSave = async (e) => {
+    e.preventDefault();
+    if (!portFormData.title.trim()) return;
+    setPortSubmitting(true);
+    try {
+      if (portEditId) {
+        await api.put(`/api/portfolio/${portEditId}`, portFormData);
+      } else {
+        await api.post('/api/portfolio', portFormData);
+      }
+      closePortForm();
+      loadTabData('portfolio');
+    } catch (err) {
+      console.error('Portfolio save failed:', err);
+    } finally {
+      setPortSubmitting(false);
+    }
+  };
+
+  const handlePortDelete = async (itemId) => {
+    if (!window.confirm('Delete this portfolio item?')) return;
+    try {
+      await api.delete(`/api/portfolio/${itemId}`);
+      loadTabData('portfolio');
+    } catch (err) {
+      console.error('Portfolio delete failed:', err);
     }
   };
 
@@ -286,7 +473,12 @@ export default function Dashboard() {
           { id: 'bookings', label: 'Bookings', icon: 'calendar_month' },
           { id: 'listings', label: 'My Listings', icon: 'store' },
           { id: 'events', label: 'My Events', icon: 'event' },
-          ...(consultantProfile ? [{ id: 'services', label: 'Consulting Services', icon: 'home_repair_service' }] : [])
+          ...(consultantProfile ? [
+            { id: 'services', label: 'Consulting Services', icon: 'home_repair_service' },
+            { id: 'portfolio', label: 'Portfolio Manager', icon: 'folder_open' },
+            { id: 'schedule', label: 'Schedule Settings', icon: 'schedule' },
+            { id: 'analytics', label: 'Analytics', icon: 'trending_up' }
+          ] : [])
         ].map((tab) => (
           <button
             key={tab.id}
@@ -919,6 +1111,429 @@ export default function Dashboard() {
                         </button>
                         <button
                           onClick={() => handleDeleteService(s.id)}
+                          className="border border-error text-error hover:bg-error/10 px-4 py-1.5 rounded-full font-bold text-[12px] transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: PERFORMANCE ANALYTICS */}
+          {activeTab === 'analytics' && consultantProfile && analyticsData && (
+            <div className="space-y-6">
+              <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-2">
+                <h3 className="font-headline-md text-headline-md text-primary font-bold">Performance Analytics</h3>
+                <p className="text-body-sm text-on-surface-variant font-medium">Review your earnings, consulting hours, and profile views over the last 7 days.</p>
+              </div>
+
+              {/* 3 Metric Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/30 flex items-center justify-between shadow-sm relative overflow-hidden">
+                  <div className="space-y-2">
+                    <span className="text-body-sm text-on-surface-variant font-bold">Total Earnings (7 Days)</span>
+                    <h3 className="text-headline-lg font-bold text-green-600 mt-1">
+                      ₹{analyticsData.earnings?.total?.toLocaleString('en-IN') || 0}
+                    </h3>
+                  </div>
+                  <span className="material-symbols-outlined text-4xl text-green-500 bg-green-50 p-3 rounded-full">payments</span>
+                </div>
+
+                <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/30 flex items-center justify-between shadow-sm relative overflow-hidden">
+                  <div className="space-y-2">
+                    <span className="text-body-sm text-on-surface-variant font-bold">Consultation Hours</span>
+                    <h3 className="text-headline-lg font-bold text-blue-600 mt-1">
+                      {analyticsData.hours?.total?.toFixed(1) || 0} hrs
+                    </h3>
+                  </div>
+                  <span className="material-symbols-outlined text-4xl text-blue-500 bg-blue-50 p-3 rounded-full">schedule</span>
+                </div>
+
+                <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/30 flex items-center justify-between shadow-sm relative overflow-hidden">
+                  <div className="space-y-2">
+                    <span className="text-body-sm text-on-surface-variant font-bold">Listing Views</span>
+                    <h3 className="text-headline-lg font-bold text-amber-600 mt-1">
+                      {analyticsData.views?.total || 0}
+                    </h3>
+                  </div>
+                  <span className="material-symbols-outlined text-4xl text-amber-500 bg-amber-50 p-3 rounded-full">trending_up</span>
+                </div>
+              </div>
+
+              {/* Daily Trend Table */}
+              <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-4">
+                <h4 className="font-bold text-primary text-body-lg">7-Day Daily Trend Metrics</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-body-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-outline-variant/30 text-on-surface-variant font-bold">
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Listing Views</th>
+                        <th className="py-3 px-4">Earnings (INR)</th>
+                        <th className="py-3 px-4">Hours Scheduled</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/10">
+                      {analyticsData.views?.trend?.map((item, idx) => {
+                        const dateStr = item.date;
+                        const viewsVal = item.value;
+                        const earningsVal = analyticsData.earnings?.trend?.[idx]?.value || 0;
+                        const hoursVal = analyticsData.hours?.trend?.[idx]?.value || 0;
+                        
+                        return (
+                          <tr key={dateStr} className="hover:bg-surface-container-lowest/50 transition-colors">
+                            <td className="py-3.5 px-4 font-semibold text-primary">
+                              {new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <span className="font-bold text-on-surface">{viewsVal}</span>
+                                <div className="w-24 bg-outline-variant/20 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                  <div 
+                                    className="bg-amber-500 h-full rounded-full" 
+                                    style={{ width: `${Math.min(100, (viewsVal / (analyticsData.views.total || 1)) * 300)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-green-700">
+                              ₹{earningsVal.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-blue-700">
+                              {hoursVal.toFixed(1)} hrs
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SCHEDULE SETTINGS */}
+          {activeTab === 'schedule' && consultantProfile && (
+            <div className="space-y-6">
+              <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-2">
+                <h3 className="font-headline-md text-headline-md text-primary font-bold">Schedule Settings</h3>
+                <p className="text-body-sm text-on-surface-variant font-medium">Manage your calendar timezone, booking limits, and daily availability slots.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Weekly Slots Form */}
+                <form onSubmit={handleSaveSchedule} className="lg:col-span-2 bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-6">
+                  <h4 className="font-bold text-primary text-body-lg border-b border-outline-variant/15 pb-2">Weekly Availability Slots</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="timezone-select" className="block text-body-sm font-bold text-primary mb-1">Timezone</label>
+                      <select
+                        id="timezone-select"
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="w-full bg-surface border border-outline-variant text-primary text-body-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                      >
+                        <option value="Asia/Kolkata">India (IST) — Asia/Kolkata</option>
+                        <option value="UTC">Coordinated Universal Time (UTC)</option>
+                        <option value="America/New_York">US Eastern Time — America/New_York</option>
+                        <option value="Europe/London">London — Europe/London</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="max-consultations" className="block text-body-sm font-bold text-primary mb-1">Max Bookings Per Day</label>
+                      <input
+                        id="max-consultations"
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={maxConsultations}
+                        onChange={(e) => setMaxConsultations(e.target.value)}
+                        className="w-full bg-surface border border-outline-variant text-primary text-body-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    {weeklySlots.map((slot, i) => (
+                      <div 
+                        key={slot.day_of_week} 
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-outline-variant/15 bg-surface"
+                      >
+                        <div className="flex items-center gap-3 font-semibold text-body-sm text-primary">
+                          <input
+                            id={`schedule-checkbox-${slot.day_of_week}`}
+                            type="checkbox"
+                            checked={slot.is_available}
+                            onChange={(e) => handleSlotChange(i, 'is_available', e.target.checked)}
+                            className="w-5 h-5 rounded focus:ring-secondary text-secondary"
+                          />
+                          <label htmlFor={`schedule-checkbox-${slot.day_of_week}`} className="w-24 cursor-pointer">
+                            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][slot.day_of_week]}
+                          </label>
+                        </div>
+
+                        {slot.is_available ? (
+                          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+                            <input
+                              aria-label="Start Time"
+                              type="time"
+                              value={slot.start_time}
+                              onChange={(e) => handleSlotChange(i, 'start_time', e.target.value)}
+                              className="bg-surface-container-low border border-outline-variant text-primary text-body-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-secondary transition-all"
+                            />
+                            <span className="text-on-surface-variant">to</span>
+                            <input
+                              aria-label="End Time"
+                              type="time"
+                              value={slot.end_time}
+                              onChange={(e) => handleSlotChange(i, 'end_time', e.target.value)}
+                              className="bg-surface-container-low border border-outline-variant text-primary text-body-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-secondary transition-all"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-on-surface-variant/40 font-bold uppercase tracking-wider select-none py-1.5">
+                            Closed / Offline
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end border-t border-outline-variant/10 pt-4">
+                    <button
+                      type="submit"
+                      disabled={savingSchedule}
+                      className="bg-secondary text-white hover:bg-secondary/90 px-6 py-2.5 rounded-full font-bold text-body-sm transition-all shadow"
+                    >
+                      {savingSchedule ? 'Saving Settings...' : 'Save Availability'}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Blocked Dates & Break Times Widgets */}
+                <div className="space-y-6">
+                  {/* Blocked Dates */}
+                  <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-4">
+                    <h4 className="font-bold text-primary text-body-lg border-b border-outline-variant/15 pb-2">Blocked Dates</h4>
+                    
+                    <form onSubmit={handleAddBlockedDate} className="flex gap-2">
+                      <input
+                        aria-label="Block Date"
+                        type="date"
+                        required
+                        value={newBlockedDate}
+                        onChange={(e) => setNewBlockedDate(e.target.value)}
+                        className="flex-grow bg-surface border border-outline-variant text-primary text-body-sm px-3 py-2 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                      />
+                      <button type="submit" className="bg-primary text-white hover:bg-primary/95 px-4 py-2 rounded-xl font-bold text-body-sm transition-all shadow">
+                        Block
+                      </button>
+                    </form>
+
+                    {blockedDates.length === 0 ? (
+                      <p className="text-body-sm text-on-surface-variant/70 italic py-2">No blocked dates defined.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {blockedDates.map((date) => {
+                          const dateObj = new Date(date);
+                          const dateStr = dateObj.toISOString().split('T')[0];
+                          return (
+                            <div key={dateStr} className="flex justify-between items-center bg-surface p-2.5 rounded-xl border border-outline-variant/10 text-body-sm">
+                              <span className="font-semibold text-primary">{dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                              <button type="button" onClick={() => handleRemoveBlockedDate(dateStr)} className="text-error hover:text-error-hover p-1">
+                                <span className="material-symbols-outlined text-[18px]">close</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Break Times */}
+                  <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-4">
+                    <h4 className="font-bold text-primary text-body-lg border-b border-outline-variant/15 pb-2">Daily Rest Break Times</h4>
+                    
+                    <form onSubmit={handleAddBreakTime} className="space-y-3 bg-surface p-3 rounded-xl border border-outline-variant/10">
+                      <div className="flex items-center gap-2 justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            aria-label="Break Start"
+                            type="time"
+                            value={newBreakStart}
+                            onChange={(e) => setNewBreakStart(e.target.value)}
+                            className="bg-surface-container-low border border-outline-variant text-primary text-body-sm px-2.5 py-1.5 rounded-lg focus:outline-none"
+                          />
+                          <span className="text-on-surface-variant">to</span>
+                          <input
+                            aria-label="Break End"
+                            type="time"
+                            value={newBreakEnd}
+                            onChange={(e) => setNewBreakEnd(e.target.value)}
+                            className="bg-surface-container-low border border-outline-variant text-primary text-body-sm px-2.5 py-1.5 rounded-lg focus:outline-none"
+                          />
+                        </div>
+                        <button type="submit" className="bg-secondary text-white hover:bg-secondary/95 px-3 py-1.5 rounded-lg font-bold text-body-sm transition-all shadow">
+                          Add
+                        </button>
+                      </div>
+                    </form>
+
+                    {breakTimes.length === 0 ? (
+                      <p className="text-body-sm text-on-surface-variant/70 italic py-2">No break times defined.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {breakTimes.map((bt, index) => (
+                          <div key={index} className="flex justify-between items-center bg-surface px-4 py-2.5 rounded-xl border border-outline-variant/10 text-body-sm">
+                            <span className="font-semibold text-primary">☕ Break: {bt.start_time} - {bt.end_time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: PORTFOLIO MANAGER */}
+          {activeTab === 'portfolio' && consultantProfile && (
+            <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-headline-md text-headline-md text-primary font-bold">Portfolio Manager</h3>
+                  <p className="text-body-sm text-on-surface-variant font-medium">Add, update, or remove projects shown on your public consultant page.</p>
+                </div>
+                <button
+                  onClick={() => openPortForm()}
+                  className="bg-secondary text-white hover:bg-secondary/90 font-label-md text-label-md px-6 py-2.5 rounded-full font-bold shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[20px]">add</span>
+                  Add Project
+                </button>
+              </div>
+
+              {/* Add/Edit Portfolio Modal Form */}
+              {showPortForm && (
+                <form onSubmit={handlePortSave} className="bg-surface border border-outline-variant/30 p-6 rounded-2xl shadow-md space-y-4 max-w-lg">
+                  <h4 className="font-bold text-primary text-body-lg">
+                    {portEditId ? 'Edit Project Details' : 'Add New Portfolio Project'}
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="port-title-input" className="block text-body-sm font-bold text-primary mb-1">Project Title</label>
+                      <input
+                        id="port-title-input"
+                        type="text"
+                        required
+                        value={portFormData.title}
+                        onChange={(e) => setPortFormData({ ...portFormData, title: e.target.value })}
+                        placeholder="e.g. Enterprise Cloud ERP Deployment"
+                        className="w-full bg-surface-container-lowest border border-outline-variant text-primary text-body-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="port-url-input" className="block text-body-sm font-bold text-primary mb-1">Project URL</label>
+                      <input
+                        id="port-url-input"
+                        type="url"
+                        value={portFormData.projectUrl}
+                        onChange={(e) => setPortFormData({ ...portFormData, projectUrl: e.target.value })}
+                        placeholder="e.g. https://github.com/my-project"
+                        className="w-full bg-surface-container-lowest border border-outline-variant text-primary text-body-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-body-sm font-bold text-primary mb-1">Cover Image</label>
+                      <ImageUpload 
+                        defaultPreview={portFormData.imageUrl}
+                        onUploadSuccess={(url) => setPortFormData({ ...portFormData, imageUrl: url })}
+                        onUploadError={(err) => console.error(err)}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="port-desc-input" className="block text-body-sm font-bold text-primary mb-1">Description / Key Outcomes</label>
+                      <textarea
+                        id="port-desc-input"
+                        rows={3}
+                        value={portFormData.description}
+                        onChange={(e) => setPortFormData({ ...portFormData, description: e.target.value })}
+                        placeholder="Provide details on scope, budget, and business growth outcomes achieved..."
+                        className="w-full bg-surface-container-lowest border border-outline-variant text-primary text-body-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={closePortForm}
+                      className="border border-outline text-primary hover:bg-surface-container-high px-5 py-2 rounded-full font-bold text-body-sm transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={portSubmitting}
+                      className="bg-secondary text-white hover:bg-secondary/90 px-6 py-2 rounded-full font-bold text-body-sm transition-all shadow"
+                    >
+                      {portSubmitting ? 'Saving...' : 'Save Project'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Portfolio Grid list */}
+              {portfolioItems.length === 0 ? (
+                <div className="text-center py-12 text-on-surface-variant bg-surface rounded-xl border border-dashed border-outline-variant/55">
+                  <span className="material-symbols-outlined text-5xl opacity-40 mb-1">folder_open</span>
+                  <p className="text-body-sm font-semibold">You haven't added any projects to your portfolio yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {portfolioItems.map((p) => (
+                    <div key={p.id} className="bg-surface border border-outline-variant/20 rounded-2xl overflow-hidden flex flex-col justify-between hover:shadow-sm">
+                      <div>
+                        {p.imageUrl && (
+                          <div className="w-full h-32 bg-surface-container-high overflow-hidden">
+                            <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="p-5 space-y-2">
+                          <h4 className="font-bold text-primary text-body-md truncate pr-4">{p.title}</h4>
+                          <p className="text-body-sm text-on-surface-variant/85 line-clamp-3">{p.description || '-'}</p>
+                          {p.projectUrl && (
+                            <a
+                              href={p.projectUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-secondary text-body-sm font-semibold hover:underline"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                              View Project
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 border-t border-outline-variant/20 p-4 bg-surface-container-lowest">
+                        <button
+                          onClick={() => openPortForm(p)}
+                          className="border border-outline text-primary hover:bg-surface-container-high px-4 py-1.5 rounded-full font-bold text-[12px] transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handlePortDelete(p.id)}
                           className="border border-error text-error hover:bg-error/10 px-4 py-1.5 rounded-full font-bold text-[12px] transition-all"
                         >
                           Delete

@@ -15,12 +15,12 @@ export class AvailabilityService {
     maxConsultationsPerDay: number = 10
   ): Promise<IAvailability> {
     try {
+      // 1. Create main availability record
       const { data, error } = await supabase
         .from(AVAILABILITY_TABLE)
         .insert([
           {
             consultant_id: consultantId,
-            slots,
             timezone,
             max_consultations_per_day: maxConsultationsPerDay,
           },
@@ -29,7 +29,23 @@ export class AvailabilityService {
         .single();
 
       if (error) throw error;
-      return data;
+
+      // 2. Insert slots into availability_slots
+      if (slots && slots.length > 0) {
+        const slotsToInsert = slots.map(slot => ({
+          availability_id: data.id,
+          day_of_week: slot.day_of_week,
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          is_available: slot.is_available
+        }));
+        const { error: slotsError } = await supabase
+          .from('availability_slots')
+          .insert(slotsToInsert);
+        if (slotsError) throw slotsError;
+      }
+
+      return { ...data, slots };
     } catch (error) {
       throw new Error(`Failed to create availability: ${error}`);
     }
@@ -40,14 +56,35 @@ export class AvailabilityService {
    */
   async getAvailability(consultantId: string): Promise<IAvailability | null> {
     try {
+      // 1. Fetch parent availability
       const { data, error } = await supabase
         .from(AVAILABILITY_TABLE)
         .select('*')
         .eq('consultant_id', consultantId)
         .single();
 
-      if (error) return null;
-      return data;
+      if (error || !data) return null;
+
+      // 2. Fetch associated slots
+      const { data: slotsData, error: slotsError } = await supabase
+        .from('availability_slots')
+        .select('*')
+        .eq('availability_id', data.id)
+        .order('day_of_week', { ascending: true });
+
+      if (slotsError) {
+        console.error(`Failed to fetch availability slots: ${slotsError.message}`);
+        return { ...data, slots: [] };
+      }
+
+      const slots = (slotsData || []).map((s: any) => ({
+        day_of_week: s.day_of_week,
+        start_time: s.start_time ? s.start_time.substring(0, 5) : '09:00',
+        end_time: s.end_time ? s.end_time.substring(0, 5) : '17:00',
+        is_available: !!s.is_available
+      }));
+
+      return { ...data, slots };
     } catch (error) {
       console.error(`Failed to fetch availability: ${error}`);
       return null;
@@ -62,15 +99,41 @@ export class AvailabilityService {
     slots: IAvailabilitySlot[]
   ): Promise<IAvailability | null> {
     try {
-      const { data, error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .update({ slots, updated_at: new Date().toISOString() })
-        .eq('consultant_id', consultantId)
-        .select()
-        .single();
+      // 1. Get availability record
+      const availability = await this.getAvailability(consultantId);
+      if (!availability) return null;
 
-      if (error) return null;
-      return data;
+      // 2. Delete existing slots
+      const { error: deleteError } = await supabase
+        .from('availability_slots')
+        .delete()
+        .eq('availability_id', availability.id);
+
+      if (deleteError) throw deleteError;
+
+      // 3. Insert new slots
+      if (slots && slots.length > 0) {
+        const slotsToInsert = slots.map(slot => ({
+          availability_id: availability.id,
+          day_of_week: slot.day_of_week,
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          is_available: slot.is_available
+        }));
+        const { error: insertError } = await supabase
+          .from('availability_slots')
+          .insert(slotsToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      // Update updated_at column on availability table
+      await supabase
+        .from(AVAILABILITY_TABLE)
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', availability.id);
+
+      return { ...availability, slots };
     } catch (error) {
       console.error(`Failed to update availability slots: ${error}`);
       return null;

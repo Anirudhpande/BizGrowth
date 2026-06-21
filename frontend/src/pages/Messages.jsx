@@ -23,7 +23,6 @@ const avatarLetters = (name) => {
     : name[0].toUpperCase();
 };
 
-const POLL_INTERVAL = 4000; // ms
 
 /* ─── component ──────────────────────────────────────────────────── */
 export default function Messages() {
@@ -56,6 +55,7 @@ export default function Messages() {
   const bottomRef  = useRef(null);
   const inputRef   = useRef(null);
   const pollRef    = useRef(null);
+  const wsRef      = useRef(null);
 
   /* ── redirect if not logged in ── */
   useEffect(() => {
@@ -111,6 +111,47 @@ export default function Messages() {
     } catch { /* ignore */ }
   }, []);
 
+  /* ── real-time websocket listener ── */
+  useEffect(() => {
+    if (!user) return;
+    
+    const token = localStorage.getItem('token') || '';
+    if (!token) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//localhost:5000/?token=${token}`;
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload && payload.type === 'new_message') {
+          const newMsg = payload.data;
+          
+          setActiveConv(currentActive => {
+            if (currentActive && newMsg.conversationId === currentActive.id) {
+              setMessages(prev => {
+                if (prev.some(m => m.id === newMsg.id)) return prev;
+                return [...prev, newMsg];
+              });
+            }
+            return currentActive;
+          });
+          
+          loadConversations();
+        }
+      } catch (err) {
+        console.error('Error parsing WebSocket payload:', err);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [user, loadConversations]);
+
   /* ── poll messages ── */
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -123,7 +164,7 @@ export default function Messages() {
     pollRef.current = setInterval(() => {
       loadMessages(activeConv.id);
       loadConversations();
-    }, POLL_INTERVAL);
+    }, 15000);
 
     return () => clearInterval(pollRef.current);
   }, [activeConv, loadMessages, loadConversations]);

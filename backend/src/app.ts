@@ -13,6 +13,7 @@ import eventsRoutes from './modules/events/events.routes';
 import contentRoutes from './modules/content/content.routes';
 import consultantsRoutes from './modules/consultants/consultants.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import uploadRoutes from './modules/upload/upload.routes';
 
 // Route imports - Phase 2 & 3
 import {
@@ -123,6 +124,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/consultants', consultantsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Phase 2 & 3 Routes (NOW MOUNTED)
 app.use('/api/bookings', bookingsRouter);

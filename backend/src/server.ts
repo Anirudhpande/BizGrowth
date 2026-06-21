@@ -5,6 +5,7 @@ dotenv.config();
 
 import app from './app';
 import { verifyConnection } from './config/db';
+import { initWebSocketServer } from './config/websocket';
 
 // ============================================================
 // Server Bootstrap
@@ -18,7 +19,7 @@ const startServer = async (): Promise<void> => {
     await verifyConnection();
 
     // 2. Start Express server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`
   ╔══════════════════════════════════════════════╗
   ║                                              ║
@@ -32,6 +33,9 @@ const startServer = async (): Promise<void> => {
   ╚══════════════════════════════════════════════╝
       `);
     });
+
+    // 3. Initialize WebSocket Server
+    initWebSocketServer(server);
   } catch (error) {
     const err = error as Error;
     console.error(`❌ Failed to start server: ${err.message}`);

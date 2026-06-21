@@ -16,6 +16,15 @@ export default function EventDetail() {
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
 
+  // Event Reviews States
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState('');
+  const [reviewError, setReviewError] = useState('');
+  const [reviewSuccess, setReviewSuccess] = useState('');
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -49,6 +58,26 @@ export default function EventDetail() {
             : Array.isArray(regEvents) && regEvents.some(ev => ev.id === id);
           setRegistered(isRegistered);
         }
+      }
+
+      // 3. Get Event Reviews
+      try {
+        const reviewsRes = await api.get(`/api/event-reviews/event/${id}`);
+        if (reviewsRes && reviewsRes.success && Array.isArray(reviewsRes.data)) {
+          setReviews(reviewsRes.data);
+        }
+      } catch (revErr) {
+        console.warn('Could not fetch event reviews:', revErr);
+      }
+
+      // 4. Get Event Review Stats
+      try {
+        const statsRes = await api.get(`/api/event-reviews/event/${id}/stats`);
+        if (statsRes && statsRes.success && statsRes.data) {
+          setStats(statsRes.data);
+        }
+      } catch (statsErr) {
+        console.warn('Could not fetch event stats:', statsErr);
       }
     } catch (err) {
       console.error('Error loading event:', err);
@@ -98,6 +127,34 @@ export default function EventDetail() {
       alert('Action failed: ' + err.message);
     } finally {
       setRegistering(false);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmittingReview(true);
+    setReviewError('');
+    setReviewSuccess('');
+    try {
+      const res = await api.post('/api/event-reviews', {
+        eventId: id,
+        rating: newRating,
+        comment: newComment.trim()
+      });
+      if (res && res.success) {
+        setReviewSuccess('Thank you! Your review has been submitted.');
+        setNewComment('');
+        setNewRating(5);
+        fetchData();
+      } else {
+        setReviewError(res?.message || 'Failed to submit review');
+      }
+    } catch (err) {
+      console.error('Review submit failed:', err);
+      setReviewError(err.message || 'Error submitting review');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -184,6 +241,143 @@ export default function EventDetail() {
                   Delete Event
                 </button>
               </div>
+            )}
+          </div>
+
+          {/* Event Reviews Card */}
+          <div className="bg-surface-container-low border border-outline-variant/30 p-8 rounded-2xl shadow-sm space-y-6">
+            <h3 className="font-bold text-primary text-body-lg border-b border-outline-variant/15 pb-2 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[20px]">rate_review</span>
+              Attendee Reviews
+            </h3>
+
+            {/* Stats Summary */}
+            {stats && stats.totalCount > 0 && (
+              <div className="flex flex-col sm:flex-row items-center gap-6 bg-surface p-6 rounded-2xl border border-outline-variant/10 shadow-sm">
+                <div className="text-center space-y-1 sm:border-r border-outline-variant/20 pr-6">
+                  <h4 className="text-headline-xl font-bold text-primary">{stats.averageRating}</h4>
+                  <div className="flex justify-center text-amber-500">
+                    {Array.from({ length: 5 }, (_, idx) => (
+                      <span key={idx} className="material-symbols-outlined text-[20px]">
+                        {idx < Math.round(stats.averageRating) ? 'star' : 'star_outline'}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[12px] text-on-surface-variant font-semibold">{stats.totalCount} reviews</p>
+                </div>
+                <div className="flex-grow space-y-1.5 w-full">
+                  {[5, 4, 3, 2, 1].map((stars) => {
+                    const count = stats.ratingDistribution?.[stars] || 0;
+                    const pct = stats.totalCount > 0 ? (count / stats.totalCount) * 100 : 0;
+                    return (
+                      <div key={stars} className="flex items-center gap-3 text-body-sm">
+                        <span className="w-12 text-primary font-bold text-right">{stars} star</span>
+                        <div className="flex-grow bg-outline-variant/20 h-2 rounded-full overflow-hidden">
+                          <div className="bg-amber-500 h-full rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="w-8 text-on-surface-variant font-bold text-right">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* List of Reviews */}
+            {reviews.length === 0 ? (
+              <div className="text-center py-8 text-on-surface-variant/70 italic">
+                No reviews have been written for this event yet.
+              </div>
+            ) : (
+              <div className="space-y-4 divide-y divide-outline-variant/10">
+                {reviews.map((rev, index) => (
+                  <div key={rev.id || index} className="pt-4 first:pt-0 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[20px] text-on-surface-variant/70">account_circle</span>
+                        <div>
+                          <p className="font-semibold text-primary text-body-sm">
+                            {rev.firstName ? `${rev.firstName} ${rev.lastName || ''}`.trim() : 'Registered Attendee'}
+                          </p>
+                          <div className="flex text-amber-500">
+                            {Array.from({ length: 5 }, (_, idx) => (
+                              <span key={idx} className="material-symbols-outlined text-[14px]">
+                                {idx < rev.rating ? 'star' : 'star_outline'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      {rev.createdAt && (
+                        <span className="text-[11px] text-on-surface-variant/60">
+                          {new Date(rev.createdAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-body-sm text-on-surface-variant/95 leading-relaxed pl-7">{rev.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Review Submission Form Card */}
+            {user && registered && new Date(event.date) < new Date() && !reviews.some(r => r.userId === user.id) && (
+              <form onSubmit={handleReviewSubmit} className="bg-surface p-6 rounded-2xl border border-outline-variant/15 shadow-sm space-y-4 pt-6">
+                <h4 className="font-bold text-primary text-body-md">Share Your Experience</h4>
+                <p className="text-[12px] text-on-surface-variant font-medium mt-1">Since you attended this past event, your feedback is highly appreciated.</p>
+
+                {reviewError && (
+                  <div className="p-3 bg-red-500/10 text-red-500 rounded-lg text-body-sm border border-red-500/20">
+                    {reviewError}
+                  </div>
+                )}
+                {reviewSuccess && (
+                  <div className="p-3 bg-green-500/10 text-green-700 rounded-lg text-body-sm border border-green-500/20">
+                    {reviewSuccess}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <span className="block text-body-sm font-bold text-primary">Your Rating</span>
+                  <div className="flex gap-1.5 text-amber-500">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNewRating(star)}
+                        className="hover:scale-110 transition-transform p-1 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[28px]">
+                          {star <= newRating ? 'star' : 'star_outline'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="review-comment-input" className="block text-body-sm font-bold text-primary">Your Feedback</label>
+                  <textarea
+                    id="review-comment-input"
+                    rows={4}
+                    required
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Tell us what you liked, what could be improved, or key takeaways..."
+                    className="w-full bg-surface-container-lowest border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="bg-secondary text-white hover:bg-secondary/90 px-6 py-2.5 rounded-full font-bold text-body-sm transition-all shadow"
+                  >
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>

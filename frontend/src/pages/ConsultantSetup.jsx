@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import ImageUpload from '../components/ImageUpload';
+
 
 export default function ConsultantSetup() {
   const { user } = useAuth();
@@ -554,14 +556,11 @@ export default function ConsultantSetup() {
                 />
               </div>
               <div>
-                <label htmlFor="port-img" className="block text-body-sm font-bold text-primary mb-1.5">Cover Image URL</label>
-                <input
-                  id="port-img"
-                  type="url"
-                  value={portFormData.imageUrl}
-                  onChange={(e) => setPortFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://example.com/project-screenshot.png"
-                  className="w-full bg-surface-container border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
+                <label className="block text-body-sm font-bold text-primary mb-1.5">Cover Image</label>
+                <ImageUpload 
+                  defaultPreview={portFormData.imageUrl}
+                  onUploadSuccess={(url) => setPortFormData(prev => ({ ...prev, imageUrl: url }))}
+                  onUploadError={(err) => setError(err)}
                 />
               </div>
               <div className="flex gap-3 justify-end pt-2">

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { api } from '../utils/api'
+import ImageUpload from '../components/ImageUpload'
+
 
 export default function OrganizationForm() {
   const { id } = useParams()
@@ -217,17 +219,13 @@ export default function OrganizationForm() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-body-sm font-semibold text-on-surface-variant" htmlFor="logoUrl">
-                    Corporate Logo Image URL
+                  <label className="block text-body-sm font-semibold text-on-surface-variant">
+                    Corporate Logo
                   </label>
-                  <input
-                    id="logoUrl"
-                    name="logoUrl"
-                    type="url"
-                    value={formData.logoUrl}
-                    onChange={handleChange}
-                    placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface hover:border-outline focus:border-primary focus:outline-none transition-all text-body-md"
+                  <ImageUpload 
+                    defaultPreview={formData.logoUrl}
+                    onUploadSuccess={(url) => setFormData(prev => ({ ...prev, logoUrl: url }))}
+                    onUploadError={(err) => setError(err)}
                   />
                 </div>
               </div>

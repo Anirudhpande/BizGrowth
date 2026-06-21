@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { BookingsService } from './bookings.service';
+import { supabase } from '../../config/supabase';
 
 const bookingsService = new BookingsService();
 
@@ -38,6 +39,26 @@ export class BookingsController {
         notes,
         status: 'pending',
       });
+
+      // Send booking confirmation email alerts
+      try {
+        const { data: clientData } = await supabase.from('users').select('email, name').eq('id', clientId).single();
+        const { data: consultantData } = await supabase.from('users').select('email, name').eq('id', consultantId).single();
+        
+        if (clientData && consultantData) {
+          const emailService = require('../../services/email.service').default;
+          emailService.sendBookingConfirmation(
+            clientData.email,
+            clientData.name || 'Client',
+            consultantData.email,
+            consultantData.name || 'Consultant',
+            scheduledAt,
+            durationMinutes || 60
+          );
+        }
+      } catch (err) {
+        console.error('Failed to trigger confirmation email:', err);
+      }
 
       res.status(201).json(booking);
     } catch (error) {
@@ -110,6 +131,28 @@ export class BookingsController {
       if (!booking) {
         res.status(404).json({ error: 'Booking not found' });
         return;
+      }
+
+      // If accepted/confirmed, trigger confirmation update emails
+      if (status === 'confirmed') {
+        try {
+          const { data: clientData } = await supabase.from('users').select('email, name').eq('id', booking.client_id).single();
+          const { data: consultantData } = await supabase.from('users').select('email, name').eq('id', booking.consultant_id).single();
+          
+          if (clientData && consultantData) {
+            const emailService = require('../../services/email.service').default;
+            emailService.sendBookingConfirmation(
+              clientData.email,
+              clientData.name || 'Client',
+              consultantData.email,
+              consultantData.name || 'Consultant',
+              booking.scheduled_at,
+              booking.duration_minutes
+            );
+          }
+        } catch (err) {
+          console.error('Failed to trigger confirmation status email:', err);
+        }
       }
 
       res.json(booking);

@@ -26,6 +26,7 @@ import ConsultantDiscovery from './pages/ConsultantDiscovery'
 import ConsultantProfileDetail from './pages/ConsultantProfileDetail'
 import ConsultantSetup from './pages/ConsultantSetup'
 import Messages from './pages/Messages'
+import NotFound from './pages/NotFound'
 import './App.css'
 
 export default function App() {
@@ -77,6 +78,9 @@ export default function App() {
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
           </Route>
+
+          {/* Catch-all Wildcard Route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 

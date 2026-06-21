@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../utils/api'
+import ImageUpload from '../components/ImageUpload'
+
 
 export default function Profile() {
   const { verifyToken } = useAuth()
@@ -208,17 +210,13 @@ export default function Profile() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="block text-body-sm font-semibold text-on-surface-variant" htmlFor="avatarUrl">
-                  Avatar Image URL
+                <label className="block text-body-sm font-semibold text-on-surface-variant">
+                  Avatar Photo
                 </label>
-                <input
-                  id="avatarUrl"
-                  name="avatarUrl"
-                  type="url"
-                  value={formData.avatarUrl}
-                  onChange={handleChange}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface hover:border-outline focus:border-primary focus:outline-none transition-all text-body-md"
+                <ImageUpload 
+                  defaultPreview={formData.avatarUrl}
+                  onUploadSuccess={(url) => setFormData(prev => ({ ...prev, avatarUrl: url }))}
+                  onUploadError={(err) => setError(err)}
                 />
               </div>
             </div>
