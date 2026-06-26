@@ -27,6 +27,9 @@ import {
   messagesRouter,
   portfolioRouter,
   analyticsRouter,
+  // Phase 4 - Cross-Border Trade Modules
+  globalTradeRouter,
+  indiaTradeRouter,
 } from './modules';
 
 // Middleware imports
@@ -137,6 +140,10 @@ app.use('/api/availability', availabilityRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/portfolio', portfolioRouter);
 app.use('/api/analytics', analyticsRouter);
+
+// Phase 4 - Cross-Border Trade Routes
+app.use('/api/global-trade', globalTradeRouter);
+app.use('/api/india-trade', indiaTradeRouter);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {

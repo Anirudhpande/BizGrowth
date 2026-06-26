@@ -26,6 +26,12 @@ import ConsultantDiscovery from './pages/ConsultantDiscovery'
 import ConsultantProfileDetail from './pages/ConsultantProfileDetail'
 import ConsultantSetup from './pages/ConsultantSetup'
 import Messages from './pages/Messages'
+import GlobalToIndia from './pages/GlobalToIndia'
+import GlobalToIndiaDetail from './pages/GlobalToIndiaDetail'
+import GlobalTradeForm from './pages/GlobalTradeForm'
+import IndiaToGlobal from './pages/IndiaToGlobal'
+import IndiaToGlobalDetail from './pages/IndiaToGlobalDetail'
+import IndiaTradeForm from './pages/IndiaTradeForm'
 import NotFound from './pages/NotFound'
 import './App.css'
 
@@ -54,6 +60,11 @@ export default function App() {
           <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/consultants" element={<ConsultantDiscovery />} />
           <Route path="/consultants/:id" element={<ConsultantProfileDetail />} />
+          
+          <Route path="/global-to-india" element={<GlobalToIndia />} />
+          <Route path="/global-to-india/:id" element={<GlobalToIndiaDetail />} />
+          <Route path="/india-to-global" element={<IndiaToGlobal />} />
+          <Route path="/india-to-global/:id" element={<IndiaToGlobalDetail />} />
 
           {/* Protected Routes Infrastructure */}
           <Route element={<ProtectedRoute />}>
@@ -72,6 +83,11 @@ export default function App() {
             <Route path="/resources/:id/edit" element={<ResourceForm />} />
             <Route path="/consultants/setup" element={<ConsultantSetup />} />
             <Route path="/messages" element={<Messages />} />
+            
+            <Route path="/global-to-india/new" element={<GlobalTradeForm />} />
+            <Route path="/global-to-india/:id/edit" element={<GlobalTradeForm />} />
+            <Route path="/india-to-global/new" element={<IndiaTradeForm />} />
+            <Route path="/india-to-global/:id/edit" element={<IndiaTradeForm />} />
           </Route>
 
           {/* Admin Routes Infrastructure */}
