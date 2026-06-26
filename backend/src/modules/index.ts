@@ -1,4 +1,6 @@
 // Phase 2 - Core Backend Modules
+import globalTradeRouter from './global-trade/global_trade.routes';
+import indiaTradeRouter from './india-trade/india_trade.routes';
 import bookingsRouter from './bookings/bookings.route';
 import reviewsRouter from './reviews/reviews.route';
 import categoriesRouter from './categories/categories.route';
@@ -21,6 +23,9 @@ export {
   messagesRouter,
   portfolioRouter,
   analyticsRouter,
+  // Phase 4 - Cross-Border Trade Modules
+  globalTradeRouter,
+  indiaTradeRouter,
 };
 
 

@@ -151,6 +151,70 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Cross-Border Trade Section */}
+      <section className="py-24 bg-surface-bright relative overflow-hidden border-t border-outline-variant/20">
+        {/* Background Accents */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
+        
+        <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+          <div className="text-center mb-16 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+              <span className="material-symbols-outlined text-[16px]">public</span>
+              <span className="font-label-md text-label-md uppercase tracking-wider font-bold">New Modules</span>
+            </div>
+            <h2 className="font-headline-xl text-headline-xl text-primary">Cross-Border Trade Hub</h2>
+            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+              Connecting Indian excellence with global demand, and bringing world-class global enterprises to the Indian market.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Global to India */}
+            <div className="bg-gradient-to-br from-[#0d1f3c] to-[#1a3260] rounded-3xl p-10 overflow-hidden relative group card-shadow hover:-translate-y-2 transition-transform duration-300">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 rounded-full blur-2xl -translate-y-1/4 translate-x-1/4"></div>
+              <div className="relative z-10 text-white flex flex-col h-full justify-between gap-8">
+                <div>
+                  <span className="text-5xl mb-6 block">🌍 🇮🇳</span>
+                  <h3 className="text-3xl font-extrabold mb-4">Global → India</h3>
+                  <p className="text-blue-100/80 text-lg leading-relaxed max-w-md">
+                    Global businesses looking to expand into the Indian market. Showcase your products and services to Indian MSMEs and Corporates.
+                  </p>
+                </div>
+                <Link to="/global-to-india" className="inline-flex items-center gap-2 bg-white text-blue-900 font-bold px-6 py-3 rounded-full self-start hover:bg-blue-50 transition-colors">
+                  Explore Global Exporters <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* India to Global */}
+            <div className="bg-gradient-to-br from-[#2d1200] to-[#001a08] rounded-3xl p-10 overflow-hidden relative group card-shadow hover:-translate-y-2 transition-transform duration-300">
+              {/* Tricolour stripe */}
+              <div className="absolute top-0 left-0 right-0 h-1.5 flex">
+                <div className="flex-1 bg-orange-500" />
+                <div className="flex-1 bg-white/70" />
+                <div className="flex-1 bg-green-500" />
+              </div>
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-2xl translate-y-1/4 translate-x-1/4"></div>
+              <div className="relative z-10 text-white flex flex-col h-full justify-between gap-8">
+                <div>
+                  <span className="text-5xl mb-6 block">🇮🇳 🌍</span>
+                  <h3 className="text-3xl font-extrabold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-white to-green-400">
+                    India → Global
+                  </h3>
+                  <p className="text-orange-100/80 text-lg leading-relaxed max-w-md">
+                    Indian manufacturers and service providers ready for the world. Discover high-quality Indian exporters targeting global markets.
+                  </p>
+                </div>
+                <Link to="/india-to-global" className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold px-6 py-3 rounded-full self-start hover:from-orange-400 hover:to-orange-500 transition-colors shadow-lg shadow-orange-500/20">
+                  Discover Indian Exporters <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Services Section (Horizontal Scroll/Asymmetric) */}
       <section className="py-24 bg-primary text-on-primary overflow-hidden">
         <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop mb-12 flex justify-between items-end">

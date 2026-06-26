@@ -87,6 +87,19 @@ export default function Navbar() {
           >
             Marketplace
           </NavLink>
+          <div className="relative group">
+            <span className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300 pb-1 border-b-2 border-transparent cursor-pointer flex items-center gap-1">
+              Trade <span className="material-symbols-outlined text-[16px]">expand_more</span>
+            </span>
+            <div className="absolute left-0 top-full mt-2 w-48 bg-surface border border-outline-variant/30 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex flex-col overflow-hidden z-50">
+              <NavLink to="/global-to-india" className="px-4 py-3 text-sm font-medium text-on-surface-variant hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center gap-2">
+                🌍 Global → India
+              </NavLink>
+              <NavLink to="/india-to-global" className="px-4 py-3 text-sm font-medium text-on-surface-variant hover:bg-orange-50 hover:text-orange-600 transition-colors flex items-center gap-2">
+                🇮🇳 India → Global
+              </NavLink>
+            </div>
+          </div>
           <NavLink 
             to="/consultants" 
             className={({ isActive }) => 
@@ -271,6 +284,30 @@ export default function Navbar() {
           >
             Marketplace
           </NavLink>
+          <div className="flex flex-col pl-4 gap-1 border-l-2 border-outline-variant/30 ml-2 my-1">
+            <NavLink 
+              to="/global-to-india" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={({ isActive }) => 
+                `font-label-md text-label-md py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 ${
+                  isActive ? 'text-blue-600 font-bold bg-blue-50' : 'text-on-surface-variant hover:bg-surface-container-low'
+                }`
+              }
+            >
+              🌍 Global → India
+            </NavLink>
+            <NavLink 
+              to="/india-to-global" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={({ isActive }) => 
+                `font-label-md text-label-md py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 ${
+                  isActive ? 'text-orange-600 font-bold bg-orange-50' : 'text-on-surface-variant hover:bg-surface-container-low'
+                }`
+              }
+            >
+              🇮🇳 India → Global
+            </NavLink>
+          </div>
           <NavLink 
             to="/consultants" 
             onClick={() => setIsMobileMenuOpen(false)}
