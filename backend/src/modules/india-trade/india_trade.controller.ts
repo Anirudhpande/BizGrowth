@@ -66,12 +66,12 @@ const indiaTradeController = {
    */
   async getListingById(req: Request, res: Response): Promise<void> {
     try {
-      const listing = await IndiaTrade.findById(req.params.id);
+      const listing = await IndiaTrade.findById(req.params.id as string);
       if (!listing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
       }
-      await IndiaTrade.incrementViews(req.params.id);
+      await IndiaTrade.incrementViews(req.params.id as string);
       res.status(200).json({ success: true, data: listing });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -117,7 +117,7 @@ const indiaTradeController = {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
 
-      const existing = await IndiaTrade.findById(req.params.id);
+      const existing = await IndiaTrade.findById(req.params.id as string);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -127,7 +127,7 @@ const indiaTradeController = {
         return;
       }
 
-      const updated = await IndiaTrade.update(req.params.id, req.body);
+      const updated = await IndiaTrade.update(req.params.id as string, req.body);
       res.status(200).json({ success: true, data: updated });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -144,7 +144,7 @@ const indiaTradeController = {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
 
-      const existing = await IndiaTrade.findById(req.params.id);
+      const existing = await IndiaTrade.findById(req.params.id as string);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -154,7 +154,7 @@ const indiaTradeController = {
         return;
       }
 
-      await IndiaTrade.delete(req.params.id);
+      await IndiaTrade.delete(req.params.id as string);
       res.status(200).json({ success: true, message: 'Listing deleted successfully' });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });

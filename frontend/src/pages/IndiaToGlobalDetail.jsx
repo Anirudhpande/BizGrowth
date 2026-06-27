@@ -19,7 +19,7 @@ export default function IndiaToGlobalDetail() {
       try {
         const res = await api.get(`/api/india-trade/${id}`);
         setListing(res?.data || null);
-      } catch (err) {
+      } catch {
         setError('Could not load listing details.');
       } finally {
         setLoading(false);
@@ -34,7 +34,7 @@ export default function IndiaToGlobalDetail() {
     try {
       await api.delete(`/api/india-trade/${id}`);
       navigate('/india-to-global');
-    } catch (err) {
+    } catch {
       alert('Failed to delete listing.');
       setDeleting(false);
     }

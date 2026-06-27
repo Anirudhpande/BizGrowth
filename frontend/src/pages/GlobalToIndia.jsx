@@ -61,6 +61,7 @@ export default function GlobalToIndia() {
     }
   }, [search, country, category, page]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchListings(); }, [fetchListings]);
 
   const clearFilters = () => { setSearch(''); setCountry(''); setCategory(''); setPage(1); };

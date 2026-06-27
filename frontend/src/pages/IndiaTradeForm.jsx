@@ -83,7 +83,7 @@ export default function IndiaTradeForm() {
             contactPhone: d.contactPhone || '',
           });
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load listing for editing.');
       } finally {
         setLoading(false);

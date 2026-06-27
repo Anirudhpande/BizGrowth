@@ -65,12 +65,12 @@ const globalTradeController = {
    */
   async getListingById(req: Request, res: Response): Promise<void> {
     try {
-      const listing = await GlobalTrade.findById(req.params.id);
+      const listing = await GlobalTrade.findById(req.params.id as string);
       if (!listing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
       }
-      await GlobalTrade.incrementViews(req.params.id);
+      await GlobalTrade.incrementViews(req.params.id as string);
       res.status(200).json({ success: true, data: listing });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -116,7 +116,7 @@ const globalTradeController = {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
 
-      const existing = await GlobalTrade.findById(req.params.id);
+      const existing = await GlobalTrade.findById(req.params.id as string);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -126,7 +126,7 @@ const globalTradeController = {
         return;
       }
 
-      const updated = await GlobalTrade.update(req.params.id, req.body);
+      const updated = await GlobalTrade.update(req.params.id as string, req.body);
       res.status(200).json({ success: true, data: updated });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -143,7 +143,7 @@ const globalTradeController = {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
 
-      const existing = await GlobalTrade.findById(req.params.id);
+      const existing = await GlobalTrade.findById(req.params.id as string);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -153,7 +153,7 @@ const globalTradeController = {
         return;
       }
 
-      await GlobalTrade.delete(req.params.id);
+      await GlobalTrade.delete(req.params.id as string);
       res.status(200).json({ success: true, message: 'Listing deleted successfully' });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });

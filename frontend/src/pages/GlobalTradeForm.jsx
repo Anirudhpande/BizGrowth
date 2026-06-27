@@ -74,7 +74,7 @@ export default function GlobalTradeForm() {
             certifications: (d.certifications || []).join(', '),
           });
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load listing for editing.');
       } finally {
         setLoading(false);
@@ -153,7 +153,7 @@ export default function GlobalTradeForm() {
           {isEdit ? '✏️ Edit Your Global Listing' : '🌍 List Your Global Business'}
         </h1>
         <p className="text-on-surface-variant text-body-md">
-          {isEdit ? 'Update your global business listing for the Indian market.' : 'Showcase your company's products and services to Indian businesses and customers.'}
+          {isEdit ? "Update your global business listing for the Indian market." : "Showcase your company's products and services to Indian businesses and customers."}
         </p>
       </div>
 
