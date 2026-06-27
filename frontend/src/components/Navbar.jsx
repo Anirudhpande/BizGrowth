@@ -87,6 +87,18 @@ export default function Navbar() {
           >
             Marketplace
           </NavLink>
+          <NavLink 
+            to="/products" 
+            className={({ isActive }) => 
+              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+                isActive 
+                  ? 'text-secondary font-bold border-secondary' 
+                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+              }`
+            }
+          >
+            Products
+          </NavLink>
           <div className="relative group">
             <span className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300 pb-1 border-b-2 border-transparent cursor-pointer flex items-center gap-1">
               Trade <span className="material-symbols-outlined text-[16px]">expand_more</span>
@@ -283,6 +295,19 @@ export default function Navbar() {
             }
           >
             Marketplace
+          </NavLink>
+          <NavLink 
+            to="/products" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={({ isActive }) => 
+              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+                isActive 
+                  ? 'bg-surface-container-low text-secondary font-bold' 
+                  : 'text-on-surface-variant hover:bg-surface-container-low'
+              }`
+            }
+          >
+            Products
           </NavLink>
           <div className="flex flex-col pl-4 gap-1 border-l-2 border-outline-variant/30 ml-2 my-1">
             <NavLink 

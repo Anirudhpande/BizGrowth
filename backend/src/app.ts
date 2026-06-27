@@ -30,6 +30,7 @@ import {
   // Phase 4 - Cross-Border Trade Modules
   globalTradeRouter,
   indiaTradeRouter,
+  productRouter,
 } from './modules';
 
 // Middleware imports
@@ -144,6 +145,7 @@ app.use('/api/analytics', analyticsRouter);
 // Phase 4 - Cross-Border Trade Routes
 app.use('/api/global-trade', globalTradeRouter);
 app.use('/api/india-trade', indiaTradeRouter);
+app.use('/api/products', productRouter);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {

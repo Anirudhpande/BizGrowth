@@ -32,6 +32,9 @@ import GlobalTradeForm from './pages/GlobalTradeForm'
 import IndiaToGlobal from './pages/IndiaToGlobal'
 import IndiaToGlobalDetail from './pages/IndiaToGlobalDetail'
 import IndiaTradeForm from './pages/IndiaTradeForm'
+import Products from './pages/Products'
+import ProductDetail from './pages/ProductDetail'
+import ProductForm from './pages/ProductForm'
 import NotFound from './pages/NotFound'
 import './App.css'
 
@@ -65,6 +68,8 @@ export default function App() {
           <Route path="/global-to-india/:id" element={<GlobalToIndiaDetail />} />
           <Route path="/india-to-global" element={<IndiaToGlobal />} />
           <Route path="/india-to-global/:id" element={<IndiaToGlobalDetail />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
 
           {/* Protected Routes Infrastructure */}
           <Route element={<ProtectedRoute />}>
@@ -88,6 +93,8 @@ export default function App() {
             <Route path="/global-to-india/:id/edit" element={<GlobalTradeForm />} />
             <Route path="/india-to-global/new" element={<IndiaTradeForm />} />
             <Route path="/india-to-global/:id/edit" element={<IndiaTradeForm />} />
+            <Route path="/products/new" element={<ProductForm />} />
+            <Route path="/products/:id/edit" element={<ProductForm />} />
           </Route>
 
           {/* Admin Routes Infrastructure */}
