@@ -1,8 +1,8 @@
 import crypto from 'crypto';
-import { supabase } from '../../config/supabase';
+import db from '../../config/db';
 import { IPayment } from './payments.model';
 
-// Lazy Razorpay getter — only instantiate when keys are available
+// Lazy Razorpay getter
 let _razorpay: any = null;
 function getRazorpay() {
   if (!_razorpay) {
@@ -44,20 +44,11 @@ export class PaymentsService {
 
       const order = await getRazorpay().orders.create(options);
 
-      // Save payment record
-      const { error } = await supabase.from(PAYMENTS_TABLE).insert([
-        {
-          booking_id: bookingId,
-          consultant_id: consultantId,
-          client_id: clientId,
-          amount,
-          currency,
-          razorpay_order_id: order.id,
-          status: 'pending',
-        },
-      ]);
+      await db.query(
+        `INSERT INTO ${PAYMENTS_TABLE} (booking_id, consultant_id, client_id, amount, currency, razorpay_order_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [bookingId, consultantId, clientId, amount, currency, order.id, 'pending']
+      );
 
-      if (error) throw error;
       return order;
     } catch (error) {
       throw new Error(`Failed to create order: ${error}`);
@@ -88,20 +79,11 @@ export class PaymentsService {
 
       const order = await getRazorpay().orders.create(options);
 
-      // Save payment record (using consultant_id as seller_id, client_id as buyer_id)
-      const { error } = await supabase.from(PAYMENTS_TABLE).insert([
-        {
-          listing_id: listingId,
-          consultant_id: sellerId,
-          client_id: buyerId,
-          amount,
-          currency,
-          razorpay_order_id: order.id,
-          status: 'pending',
-        },
-      ]);
+      await db.query(
+        `INSERT INTO ${PAYMENTS_TABLE} (listing_id, consultant_id, client_id, amount, currency, razorpay_order_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [listingId, sellerId, buyerId, amount, currency, order.id, 'pending']
+      );
 
-      if (error) throw error;
       return order;
     } catch (error) {
       throw new Error(`Failed to create listing order: ${error}`);
@@ -137,22 +119,14 @@ export class PaymentsService {
       const paymentData = webhookData.payload.payment.entity;
       const { order_id, id, method, status, error_reason } = paymentData;
 
-      // Find and update payment
-      const { data, error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .update({
-          razorpay_payment_id: id,
-          payment_method: method,
-          status: status === 'captured' ? 'completed' : 'failed',
-          error_message: error_reason,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('razorpay_order_id', order_id)
-        .select()
-        .single();
+      const newStatus = status === 'captured' ? 'completed' : 'failed';
+      const res = await db.query(
+        `UPDATE ${PAYMENTS_TABLE} SET razorpay_payment_id = $1, payment_method = $2, status = $3, error_message = $4, updated_at = NOW() WHERE razorpay_order_id = $5 RETURNING *`,
+        [id, method, newStatus, error_reason, order_id]
+      );
 
-      if (error) return null;
-      return data;
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       throw new Error(`Failed to handle webhook: ${error}`);
     }
@@ -166,19 +140,13 @@ export class PaymentsService {
     razorpayPaymentId: string
   ): Promise<IPayment | null> {
     try {
-      const { data, error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .update({
-          razorpay_payment_id: razorpayPaymentId,
-          status: 'completed',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('razorpay_order_id', razorpayOrderId)
-        .select()
-        .single();
+      const res = await db.query(
+        `UPDATE ${PAYMENTS_TABLE} SET razorpay_payment_id = $1, status = 'completed', updated_at = NOW() WHERE razorpay_order_id = $2 RETURNING *`,
+        [razorpayPaymentId, razorpayOrderId]
+      );
 
-      if (error) return null;
-      return data;
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to update payment: ${error}`);
       return null;
@@ -190,14 +158,9 @@ export class PaymentsService {
    */
   async getPaymentById(paymentId: string): Promise<IPayment | null> {
     try {
-      const { data, error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .select('*')
-        .eq('id', paymentId)
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(`SELECT * FROM ${PAYMENTS_TABLE} WHERE id = $1`, [paymentId]);
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to fetch payment: ${error}`);
       return null;
@@ -209,14 +172,9 @@ export class PaymentsService {
    */
   async getPaymentByOrderId(razorpayOrderId: string): Promise<IPayment | null> {
     try {
-      const { data, error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .select('*')
-        .eq('razorpay_order_id', razorpayOrderId)
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(`SELECT * FROM ${PAYMENTS_TABLE} WHERE razorpay_order_id = $1`, [razorpayOrderId]);
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to fetch payment: ${error}`);
       return null;
@@ -233,34 +191,23 @@ export class PaymentsService {
     skip: number = 0
   ): Promise<{ payments: IPayment[]; total: number }> {
     try {
-      // Get total count
-      let countQuery = supabase
-        .from(PAYMENTS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .eq('consultant_id', consultantId);
+      let countQueryStr = `SELECT COUNT(*) FROM ${PAYMENTS_TABLE} WHERE consultant_id = $1`;
+      let dataQueryStr = `SELECT * FROM ${PAYMENTS_TABLE} WHERE consultant_id = $1`;
+      const values: any[] = [consultantId];
 
       if (status) {
-        countQuery = countQuery.eq('status', status);
+        countQueryStr += ` AND status = $2`;
+        dataQueryStr += ` AND status = $2`;
+        values.push(status);
       }
 
-      const { count: total } = await countQuery;
+      const countRes = await db.query(countQueryStr, values);
+      const total = parseInt(countRes.rows[0].count, 10);
 
-      // Get paginated data
-      let query = supabase
-        .from(PAYMENTS_TABLE)
-        .select('*')
-        .eq('consultant_id', consultantId)
-        .order('created_at', { ascending: false })
-        .range(skip, skip + limit - 1);
+      dataQueryStr += ` ORDER BY created_at DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+      const dataRes = await db.query(dataQueryStr, [...values, limit, skip]);
 
-      if (status) {
-        query = query.eq('status', status);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return { payments: data || [], total: total || 0 };
+      return { payments: dataRes.rows, total };
     } catch (error) {
       console.error(`Failed to fetch payments: ${error}`);
       return { payments: [], total: 0 };
@@ -272,15 +219,9 @@ export class PaymentsService {
    */
   async getPaymentStats(consultantId: string): Promise<any> {
     try {
-      const { data, error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .select('amount')
-        .eq('consultant_id', consultantId)
-        .eq('status', 'completed');
-
-      if (error) throw error;
-
-      const payments = data || [];
+      const res = await db.query(`SELECT amount FROM ${PAYMENTS_TABLE} WHERE consultant_id = $1 AND status = 'completed'`, [consultantId]);
+      
+      const payments = res.rows;
       if (payments.length === 0) {
         return { totalEarnings: 0, totalPayments: 0, avgAmount: 0 };
       }
@@ -326,18 +267,11 @@ export class PaymentsService {
         refundOptions
       );
 
-      // Update payment status
-      const { error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .update({
-          status: 'refunded',
-          refund_amount: refundAmount || payment.amount,
-          refund_reason: refundReason,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', paymentId);
+      await db.query(
+        `UPDATE ${PAYMENTS_TABLE} SET status = 'refunded', refund_amount = $1, refund_reason = $2, updated_at = NOW() WHERE id = $3`,
+        [refundAmount || payment.amount, refundReason, paymentId]
+      );
 
-      if (error) throw error;
       return refund;
     } catch (error) {
       throw new Error(`Failed to refund payment: ${error}`);
@@ -349,16 +283,13 @@ export class PaymentsService {
    */
   async getPaymentMethodStats(consultantId: string): Promise<any> {
     try {
-      const { data, error } = await supabase
-        .from(PAYMENTS_TABLE)
-        .select('payment_method, amount')
-        .eq('consultant_id', consultantId)
-        .eq('status', 'completed');
-
-      if (error) throw error;
+      const res = await db.query(
+        `SELECT payment_method, amount FROM ${PAYMENTS_TABLE} WHERE consultant_id = $1 AND status = 'completed'`,
+        [consultantId]
+      );
 
       const stats: any = {};
-      data?.forEach((payment) => {
+      res.rows.forEach((payment) => {
         const method = payment.payment_method || 'unknown';
         if (!stats[method]) {
           stats[method] = { count: 0, totalAmount: 0 };

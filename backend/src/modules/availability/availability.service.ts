@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import db from '../../config/db';
 import { IAvailability, IAvailabilitySlot } from './availability.model';
 
 const AVAILABILITY_TABLE = 'availability';
@@ -14,40 +14,35 @@ export class AvailabilityService {
     timezone: string = 'Asia/Kolkata',
     maxConsultationsPerDay: number = 10
   ): Promise<IAvailability> {
+    const client = await db.pool.connect();
     try {
-      // 1. Create main availability record
-      const { data, error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .insert([
-          {
-            consultant_id: consultantId,
-            timezone,
-            max_consultations_per_day: maxConsultationsPerDay,
-          },
-        ])
-        .select()
-        .single();
+      await client.query('BEGIN');
+      const insertAvailQuery = `
+        INSERT INTO availability (consultant_id, timezone, max_consultations_per_day)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+      const availRes = await client.query(insertAvailQuery, [consultantId, timezone, maxConsultationsPerDay]);
+      const availabilityData = availRes.rows[0];
 
-      if (error) throw error;
-
-      // 2. Insert slots into availability_slots
       if (slots && slots.length > 0) {
-        const slotsToInsert = slots.map(slot => ({
-          availability_id: data.id,
-          day_of_week: slot.day_of_week,
-          start_time: slot.start_time,
-          end_time: slot.end_time,
-          is_available: slot.is_available
-        }));
-        const { error: slotsError } = await supabase
-          .from('availability_slots')
-          .insert(slotsToInsert);
-        if (slotsError) throw slotsError;
+        for (const slot of slots) {
+          const insertSlotQuery = `
+            INSERT INTO availability_slots (availability_id, day_of_week, start_time, end_time, is_available)
+            VALUES ($1, $2, $3, $4, $5)
+          `;
+          await client.query(insertSlotQuery, [
+            availabilityData.id, slot.day_of_week, slot.start_time, slot.end_time, slot.is_available
+          ]);
+        }
       }
-
-      return { ...data, slots };
+      await client.query('COMMIT');
+      return { ...availabilityData, slots };
     } catch (error) {
+      await client.query('ROLLBACK');
       throw new Error(`Failed to create availability: ${error}`);
+    } finally {
+      client.release();
     }
   }
 
@@ -56,28 +51,12 @@ export class AvailabilityService {
    */
   async getAvailability(consultantId: string): Promise<IAvailability | null> {
     try {
-      // 1. Fetch parent availability
-      const { data, error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .select('*')
-        .eq('consultant_id', consultantId)
-        .single();
+      const availRes = await db.query(`SELECT * FROM availability WHERE consultant_id = $1`, [consultantId]);
+      if (availRes.rows.length === 0) return null;
+      const data = availRes.rows[0];
 
-      if (error || !data) return null;
-
-      // 2. Fetch associated slots
-      const { data: slotsData, error: slotsError } = await supabase
-        .from('availability_slots')
-        .select('*')
-        .eq('availability_id', data.id)
-        .order('day_of_week', { ascending: true });
-
-      if (slotsError) {
-        console.error(`Failed to fetch availability slots: ${slotsError.message}`);
-        return { ...data, slots: [] };
-      }
-
-      const slots = (slotsData || []).map((s: any) => ({
+      const slotsRes = await db.query(`SELECT * FROM availability_slots WHERE availability_id = $1 ORDER BY day_of_week ASC`, [data.id]);
+      const slots = slotsRes.rows.map((s: any) => ({
         day_of_week: s.day_of_week,
         start_time: s.start_time ? s.start_time.substring(0, 5) : '09:00',
         end_time: s.end_time ? s.end_time.substring(0, 5) : '17:00',
@@ -98,55 +77,45 @@ export class AvailabilityService {
     consultantId: string,
     slots: IAvailabilitySlot[]
   ): Promise<IAvailability | null> {
+    const client = await db.pool.connect();
     try {
-      // 1. Get availability record
       const availability = await this.getAvailability(consultantId);
-      if (!availability) return null;
-
-      // 2. Delete existing slots
-      const { error: deleteError } = await supabase
-        .from('availability_slots')
-        .delete()
-        .eq('availability_id', availability.id);
-
-      if (deleteError) throw deleteError;
-
-      // 3. Insert new slots
-      if (slots && slots.length > 0) {
-        const slotsToInsert = slots.map(slot => ({
-          availability_id: availability.id,
-          day_of_week: slot.day_of_week,
-          start_time: slot.start_time,
-          end_time: slot.end_time,
-          is_available: slot.is_available
-        }));
-        const { error: insertError } = await supabase
-          .from('availability_slots')
-          .insert(slotsToInsert);
-
-        if (insertError) throw insertError;
+      if (!availability) {
+        client.release();
+        return null;
       }
 
-      // Update updated_at column on availability table
-      await supabase
-        .from(AVAILABILITY_TABLE)
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', availability.id);
+      await client.query('BEGIN');
+      await client.query(`DELETE FROM availability_slots WHERE availability_id = $1`, [availability.id]);
 
+      if (slots && slots.length > 0) {
+        for (const slot of slots) {
+          const insertSlotQuery = `
+            INSERT INTO availability_slots (availability_id, day_of_week, start_time, end_time, is_available)
+            VALUES ($1, $2, $3, $4, $5)
+          `;
+          await client.query(insertSlotQuery, [
+            availability.id, slot.day_of_week, slot.start_time, slot.end_time, slot.is_available
+          ]);
+        }
+      }
+
+      await client.query(`UPDATE availability SET updated_at = NOW() WHERE id = $1`, [availability.id]);
+      await client.query('COMMIT');
       return { ...availability, slots };
     } catch (error) {
+      await client.query('ROLLBACK');
       console.error(`Failed to update availability slots: ${error}`);
       return null;
+    } finally {
+      client.release();
     }
   }
 
   /**
    * Add blocked dates
    */
-  async addBlockedDates(
-    consultantId: string,
-    dates: Date[]
-  ): Promise<IAvailability | null> {
+  async addBlockedDates(consultantId: string, dates: Date[]): Promise<IAvailability | null> {
     try {
       const availability = await this.getAvailability(consultantId);
       if (!availability) return null;
@@ -155,15 +124,12 @@ export class AvailabilityService {
         ? [...availability.blocked_dates, ...dates]
         : dates;
 
-      const { data, error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .update({ blocked_dates: blockedDates, updated_at: new Date().toISOString() })
-        .eq('consultant_id', consultantId)
-        .select()
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(
+        `UPDATE availability SET blocked_dates = $1, updated_at = NOW() WHERE consultant_id = $2 RETURNING *`,
+        [JSON.stringify(blockedDates), consultantId]
+      );
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to add blocked dates: ${error}`);
       return null;
@@ -173,27 +139,21 @@ export class AvailabilityService {
   /**
    * Remove blocked dates
    */
-  async removeBlockedDate(
-    consultantId: string,
-    date: Date
-  ): Promise<IAvailability | null> {
+  async removeBlockedDate(consultantId: string, date: Date): Promise<IAvailability | null> {
     try {
       const availability = await this.getAvailability(consultantId);
       if (!availability) return null;
 
       const blockedDates = (availability.blocked_dates || []).filter(
-        (bd) => new Date(bd).toDateString() !== new Date(date).toDateString()
+        (bd: any) => new Date(bd).toDateString() !== new Date(date).toDateString()
       );
 
-      const { data, error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .update({ blocked_dates: blockedDates, updated_at: new Date().toISOString() })
-        .eq('consultant_id', consultantId)
-        .select()
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(
+        `UPDATE availability SET blocked_dates = $1, updated_at = NOW() WHERE consultant_id = $2 RETURNING *`,
+        [JSON.stringify(blockedDates), consultantId]
+      );
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to remove blocked date: ${error}`);
       return null;
@@ -203,11 +163,7 @@ export class AvailabilityService {
   /**
    * Add break time
    */
-  async addBreakTime(
-    consultantId: string,
-    startTime: string,
-    endTime: string
-  ): Promise<IAvailability | null> {
+  async addBreakTime(consultantId: string, startTime: string, endTime: string): Promise<IAvailability | null> {
     try {
       const availability = await this.getAvailability(consultantId);
       if (!availability) return null;
@@ -215,15 +171,12 @@ export class AvailabilityService {
       const breakTimes = availability.break_times || [];
       breakTimes.push({ start_time: startTime, end_time: endTime });
 
-      const { data, error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .update({ break_times: breakTimes, updated_at: new Date().toISOString() })
-        .eq('consultant_id', consultantId)
-        .select()
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(
+        `UPDATE availability SET break_times = $1, updated_at = NOW() WHERE consultant_id = $2 RETURNING *`,
+        [JSON.stringify(breakTimes), consultantId]
+      );
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to add break time: ${error}`);
       return null;
@@ -233,86 +186,48 @@ export class AvailabilityService {
   /**
    * Check if consultant is available
    */
-  async isAvailable(
-    consultantId: string,
-    scheduledAt: Date,
-    durationMinutes: number
-  ): Promise<boolean> {
+  async isAvailable(consultantId: string, scheduledAt: Date, durationMinutes: number): Promise<boolean> {
     try {
       const availability = await this.getAvailability(consultantId);
+      if (!availability) return false;
 
-      if (!availability) {
-        return false;
-      }
-
-      // Check if date is blocked
-      const dateOnly = new Date(
-        scheduledAt.getFullYear(),
-        scheduledAt.getMonth(),
-        scheduledAt.getDate()
-      );
+      const dateOnly = new Date(scheduledAt.getFullYear(), scheduledAt.getMonth(), scheduledAt.getDate());
       const isBlocked = availability.blocked_dates?.some(
-        (bd) => new Date(bd).toDateString() === dateOnly.toDateString()
+        (bd: any) => new Date(bd).toDateString() === dateOnly.toDateString()
       );
+      if (isBlocked) return false;
 
-      if (isBlocked) {
-        return false;
-      }
-
-      // Check day of week and time slots
       const dayOfWeek = scheduledAt.getDay();
-      const timeStr = `${String(scheduledAt.getHours()).padStart(2, '0')}:${
-        String(scheduledAt.getMinutes()).padStart(2, '0')
-      }`;
+      const timeStr = `${String(scheduledAt.getHours()).padStart(2, '0')}:${String(scheduledAt.getMinutes()).padStart(2, '0')}`;
+      
+      const slot = availability.slots?.find((s: any) => s.day_of_week === dayOfWeek && s.is_available);
+      if (!slot) return false;
 
-      const slot = availability.slots?.find(
-        (s) => s.day_of_week === dayOfWeek && s.is_available
-      );
-
-      if (!slot) {
-        return false;
-      }
-
-      // Check if time is within slot
       const isWithinSlot = timeStr >= slot.start_time && timeStr < slot.end_time;
+      if (!isWithinSlot) return false;
 
-      if (!isWithinSlot) {
-        return false;
-      }
-
-      // Check break times
       const endTime = new Date(scheduledAt.getTime() + durationMinutes * 60000);
-      const endTimeStr = `${String(endTime.getHours()).padStart(2, '0')}:${
-        String(endTime.getMinutes()).padStart(2, '0')
-      }`;
+      const endTimeStr = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
 
       const isInBreak = availability.break_times?.some(
-        (bt) => timeStr < (bt.end_time || '') && endTimeStr > (bt.start_time || '')
+        (bt: any) => timeStr < (bt.end_time || '') && endTimeStr > (bt.start_time || '')
       );
+      if (isInBreak) return false;
 
-      if (isInBreak) {
-        return false;
-      }
-
-      // Check max consultations per day
       const dayStart = new Date(scheduledAt);
       dayStart.setHours(0, 0, 0, 0);
-
       const dayEnd = new Date(scheduledAt);
       dayEnd.setHours(23, 59, 59, 999);
 
-      const { count } = await supabase
-        .from(BOOKINGS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .eq('consultant_id', consultantId)
-        .gte('scheduled_at', dayStart.toISOString())
-        .lte('scheduled_at', dayEnd.toISOString())
-        .in('status', ['pending', 'confirmed', 'completed']);
+      const countRes = await db.query(
+        `SELECT COUNT(*) FROM bookings WHERE consultant_id = $1 AND scheduled_at >= $2 AND scheduled_at <= $3 AND status IN ('pending', 'confirmed', 'completed')`,
+        [consultantId, dayStart.toISOString(), dayEnd.toISOString()]
+      );
 
-      if ((count || 0) >= (availability.max_consultations_per_day || 10)) {
+      const count = parseInt(countRes.rows[0].count, 10) || 0;
+      if (count >= (availability.max_consultations_per_day || 10)) {
         return false;
       }
-
       return true;
     } catch (error) {
       console.error(`Failed to check availability: ${error}`);
@@ -323,32 +238,19 @@ export class AvailabilityService {
   /**
    * Get available time slots for a date range
    */
-  async getAvailableSlots(
-    consultantId: string,
-    fromDate: Date,
-    toDate: Date,
-    durationMinutes: number = 60
-  ): Promise<Date[]> {
+  async getAvailableSlots(consultantId: string, fromDate: Date, toDate: Date, durationMinutes: number = 60): Promise<Date[]> {
     try {
       const availability = await this.getAvailability(consultantId);
       const slots: Date[] = [];
-
-      if (!availability) {
-        return slots;
-      }
+      if (!availability) return slots;
 
       let currentDate = new Date(fromDate);
-
       while (currentDate <= toDate) {
         const dayOfWeek = currentDate.getDay();
-        const availabilitySlot = availability.slots?.find(
-          (s) => s.day_of_week === dayOfWeek && s.is_available
-        );
+        const availabilitySlot = availability.slots?.find((s: any) => s.day_of_week === dayOfWeek && s.is_available);
 
         if (availabilitySlot) {
-          const [startHour, startMin] = availabilitySlot.start_time
-            .split(':')
-            .map(Number);
+          const [startHour, startMin] = availabilitySlot.start_time.split(':').map(Number);
           const [endHour, endMin] = availabilitySlot.end_time.split(':').map(Number);
 
           let slotTime = new Date(currentDate);
@@ -357,20 +259,15 @@ export class AvailabilityService {
           const slotEndTime = new Date(currentDate);
           slotEndTime.setHours(endHour, endMin, 0);
 
-          while (
-            slotTime.getTime() + durationMinutes * 60000 <=
-            slotEndTime.getTime()
-          ) {
+          while (slotTime.getTime() + durationMinutes * 60000 <= slotEndTime.getTime()) {
             if (await this.isAvailable(consultantId, slotTime, durationMinutes)) {
               slots.push(new Date(slotTime));
             }
             slotTime = new Date(slotTime.getTime() + durationMinutes * 60000);
           }
         }
-
         currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
       }
-
       return slots;
     } catch (error) {
       console.error(`Failed to get available slots: ${error}`);
@@ -383,12 +280,7 @@ export class AvailabilityService {
    */
   async deleteAvailability(consultantId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from(AVAILABILITY_TABLE)
-        .delete()
-        .eq('consultant_id', consultantId);
-
-      if (error) throw error;
+      await db.query(`DELETE FROM availability WHERE consultant_id = $1`, [consultantId]);
       return true;
     } catch (error) {
       console.error(`Failed to delete availability: ${error}`);

@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import db from '../../config/db';
 import { INotification } from './notifications.model';
 
 const NOTIFICATIONS_TABLE = 'notifications';
@@ -18,28 +18,15 @@ export class NotificationsService {
     relatedModel?: string
   ): Promise<INotification> {
     try {
-      const { data: notification, error } = await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .insert([
-          {
-            user_id: userId,
-            type,
-            title,
-            message,
-            channels,
-            data,
-            related_id: relatedId,
-            related_model: relatedModel,
-          },
-        ])
-        .select()
-        .single();
+      const res = await db.query(
+        `INSERT INTO ${NOTIFICATIONS_TABLE} (user_id, type, title, message, channels, data, related_id, related_model) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [userId, type, title, message, JSON.stringify(channels), JSON.stringify(data || {}), relatedId, relatedModel]
+      );
 
-      if (error) throw error;
-
+      const notification = res.rows[0];
       // Send via channels
       await this.sendViaChannels(notification);
-
       return notification;
     } catch (error) {
       throw new Error(`Failed to create notification: ${error}`);
@@ -68,11 +55,10 @@ export class NotificationsService {
         }
       }
 
-      // Update sent timestamp
-      await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .update({ sent_at: new Date().toISOString() })
-        .eq('id', notification.id);
+      await db.query(
+        `UPDATE ${NOTIFICATIONS_TABLE} SET sent_at = NOW() WHERE id = $1`,
+        [notification.id]
+      );
     } catch (error) {
       console.error(`Failed to send via channels: ${error}`);
     }
@@ -112,34 +98,23 @@ export class NotificationsService {
     skip: number = 0
   ): Promise<{ notifications: INotification[]; total: number }> {
     try {
-      // Get total count
-      let countQuery = supabase
-        .from(NOTIFICATIONS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+      let countQueryStr = `SELECT COUNT(*) FROM ${NOTIFICATIONS_TABLE} WHERE user_id = $1`;
+      let dataQueryStr = `SELECT * FROM ${NOTIFICATIONS_TABLE} WHERE user_id = $1`;
+      const queryValues: any[] = [userId];
 
       if (read !== undefined) {
-        countQuery = countQuery.eq('read', read);
+        countQueryStr += ` AND read = $2`;
+        dataQueryStr += ` AND read = $2`;
+        queryValues.push(read);
       }
 
-      const { count: total } = await countQuery;
+      const countRes = await db.query(countQueryStr, queryValues);
+      const total = parseInt(countRes.rows[0].count, 10);
 
-      // Get paginated data
-      let query = supabase
-        .from(NOTIFICATIONS_TABLE)
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .range(skip, skip + limit - 1);
-
-      if (read !== undefined) {
-        query = query.eq('read', read);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return { notifications: data || [], total: total || 0 };
+      dataQueryStr += ` ORDER BY created_at DESC LIMIT $${queryValues.length + 1} OFFSET $${queryValues.length + 2}`;
+      
+      const dataRes = await db.query(dataQueryStr, [...queryValues, limit, skip]);
+      return { notifications: dataRes.rows, total };
     } catch (error) {
       console.error(`Failed to fetch notifications: ${error}`);
       return { notifications: [], total: 0 };
@@ -151,15 +126,12 @@ export class NotificationsService {
    */
   async markAsRead(notificationId: string): Promise<INotification | null> {
     try {
-      const { data, error } = await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .update({ read: true, updated_at: new Date().toISOString() })
-        .eq('id', notificationId)
-        .select()
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(
+        `UPDATE ${NOTIFICATIONS_TABLE} SET read = true, updated_at = NOW() WHERE id = $1 RETURNING *`,
+        [notificationId]
+      );
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to mark notification as read: ${error}`);
       return null;
@@ -171,13 +143,10 @@ export class NotificationsService {
    */
   async markAllAsRead(userId: string): Promise<any> {
     try {
-      const { error } = await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .update({ read: true, updated_at: new Date().toISOString() })
-        .eq('user_id', userId)
-        .eq('read', false);
-
-      if (error) throw error;
+      await db.query(
+        `UPDATE ${NOTIFICATIONS_TABLE} SET read = true, updated_at = NOW() WHERE user_id = $1 AND read = false`,
+        [userId]
+      );
       return { success: true };
     } catch (error) {
       console.error(`Failed to mark all as read: ${error}`);
@@ -190,14 +159,11 @@ export class NotificationsService {
    */
   async getUnreadCount(userId: string): Promise<number> {
     try {
-      const { count, error } = await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('read', false);
-
-      if (error) throw error;
-      return count || 0;
+      const res = await db.query(
+        `SELECT COUNT(*) FROM ${NOTIFICATIONS_TABLE} WHERE user_id = $1 AND read = false`,
+        [userId]
+      );
+      return parseInt(res.rows[0].count, 10);
     } catch (error) {
       console.error(`Failed to get unread count: ${error}`);
       return 0;
@@ -209,12 +175,7 @@ export class NotificationsService {
    */
   async deleteNotification(notificationId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .delete()
-        .eq('id', notificationId);
-
-      if (error) throw error;
+      await db.query(`DELETE FROM ${NOTIFICATIONS_TABLE} WHERE id = $1`, [notificationId]);
       return true;
     } catch (error) {
       console.error(`Failed to delete notification: ${error}`);
@@ -227,12 +188,7 @@ export class NotificationsService {
    */
   async deleteAllNotifications(userId: string): Promise<any> {
     try {
-      const { error } = await supabase
-        .from(NOTIFICATIONS_TABLE)
-        .delete()
-        .eq('user_id', userId);
-
-      if (error) throw error;
+      await db.query(`DELETE FROM ${NOTIFICATIONS_TABLE} WHERE user_id = $1`, [userId]);
       return { success: true };
     } catch (error) {
       console.error(`Failed to delete all notifications: ${error}`);
@@ -249,7 +205,6 @@ export class NotificationsService {
     bookingId: string,
     bookingTime: string
   ): Promise<void> {
-    // Notify consultant
     await this.createNotification(
       consultantId,
       'booking',
@@ -261,7 +216,6 @@ export class NotificationsService {
       'Booking'
     );
 
-    // Notify client
     await this.createNotification(
       clientId,
       'booking',
@@ -283,7 +237,6 @@ export class NotificationsService {
     amount: number,
     paymentId: string
   ): Promise<void> {
-    // Notify consultant
     await this.createNotification(
       consultantId,
       'payment',
@@ -295,7 +248,6 @@ export class NotificationsService {
       'Payment'
     );
 
-    // Notify client
     await this.createNotification(
       clientId,
       'payment',

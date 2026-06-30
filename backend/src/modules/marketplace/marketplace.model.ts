@@ -175,9 +175,10 @@ class MarketplaceModel {
       params.push(`%${query.industry}%`);
     }
     if (query.search) {
-      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx})`);
+      conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx + 1})`);
       params.push(`%${query.search}%`);
-      idx++;
+      params.push(`%${query.search}%`);
+      idx += 2;
     }
     if ((query as any).type) {
       conditions.push(`type = $${idx++}`);
