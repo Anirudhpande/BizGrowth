@@ -5,6 +5,7 @@ import {
   UpdateListingInput,
   PaginationQuery,
 } from '../../types';
+import { LLMFactory } from '../../services/llm.factory';
 
 // ============================================================
 // Marketplace Service — Business Logic Layer
@@ -38,6 +39,20 @@ class MarketplaceService {
     if (!input.title || !input.type) {
       throw Object.assign(new Error('Title and type are required'), { statusCode: 400 });
     }
+
+    // Future-proofing: If no tags are provided, use the LLM to extract them from the description
+    if (!input.tags || input.tags.length === 0) {
+      if (input.description) {
+        try {
+          const llm = LLMFactory.getProvider();
+          const generatedTags = await llm.extractTags(input.description);
+          input.tags = generatedTags;
+        } catch (error) {
+          console.warn('LLM failed to generate tags, proceeding without them.', error);
+        }
+      }
+    }
+
     return Marketplace.create(userId, input);
   }
 

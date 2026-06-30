@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { BookingsService } from './bookings.service';
-import { supabase } from '../../config/supabase';
+import db from '../../config/db';
 
 const bookingsService = new BookingsService();
 
@@ -42,8 +42,11 @@ export class BookingsController {
 
       // Send booking confirmation email alerts
       try {
-        const { data: clientData } = await supabase.from('users').select('email, name').eq('id', clientId).single();
-        const { data: consultantData } = await supabase.from('users').select('email, name').eq('id', consultantId).single();
+        const clientRes = await db.query('SELECT email, name FROM users WHERE id = $1', [clientId]);
+        const clientData = clientRes.rows[0];
+
+        const consultantRes = await db.query('SELECT email, name FROM users WHERE id = $1', [consultantId]);
+        const consultantData = consultantRes.rows[0];
         
         if (clientData && consultantData) {
           const emailService = require('../../services/email.service').default;
@@ -136,8 +139,11 @@ export class BookingsController {
       // If accepted/confirmed, trigger confirmation update emails
       if (status === 'confirmed') {
         try {
-          const { data: clientData } = await supabase.from('users').select('email, name').eq('id', booking.client_id).single();
-          const { data: consultantData } = await supabase.from('users').select('email, name').eq('id', booking.consultant_id).single();
+          const clientRes = await db.query('SELECT email, name FROM users WHERE id = $1', [booking.client_id]);
+          const clientData = clientRes.rows[0];
+
+          const consultantRes = await db.query('SELECT email, name FROM users WHERE id = $1', [booking.consultant_id]);
+          const consultantData = consultantRes.rows[0];
           
           if (clientData && consultantData) {
             const emailService = require('../../services/email.service').default;

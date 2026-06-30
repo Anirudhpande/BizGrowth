@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import db from '../../config/db';
 import { IReview } from './reviews.model';
 
 const REVIEWS_TABLE = 'reviews';
@@ -9,14 +9,15 @@ export class ReviewsService {
    */
   async createReview(reviewData: Partial<IReview>): Promise<IReview> {
     try {
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .insert([reviewData])
-        .select()
-        .single();
+      const columns = Object.keys(reviewData).join(', ');
+      const placeholders = Object.keys(reviewData).map((_, i) => `$${i + 1}`).join(', ');
+      const values = Object.values(reviewData);
 
-      if (error) throw error;
-      return data;
+      const res = await db.query(
+        `INSERT INTO ${REVIEWS_TABLE} (${columns}) VALUES (${placeholders}) RETURNING *`,
+        values
+      );
+      return res.rows[0];
     } catch (error) {
       throw new Error(`Failed to create review: ${error}`);
     }
@@ -27,14 +28,9 @@ export class ReviewsService {
    */
   async getReviewById(reviewId: string): Promise<IReview | null> {
     try {
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('*')
-        .eq('id', reviewId)
-        .single();
-
-      if (error) return null;
-      return data;
+      const res = await db.query(`SELECT * FROM ${REVIEWS_TABLE} WHERE id = $1`, [reviewId]);
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to fetch review: ${error}`);
       return null;
@@ -50,22 +46,15 @@ export class ReviewsService {
     skip: number = 0
   ): Promise<{ reviews: IReview[]; total: number }> {
     try {
-      // Get total count
-      const { count: total } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .eq('consultant_id', consultantId);
+      const countRes = await db.query(`SELECT COUNT(*) FROM ${REVIEWS_TABLE} WHERE consultant_id = $1`, [consultantId]);
+      const total = parseInt(countRes.rows[0].count, 10);
 
-      // Get paginated data
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('*')
-        .eq('consultant_id', consultantId)
-        .order('created_at', { ascending: false })
-        .range(skip, skip + limit - 1);
-
-      if (error) throw error;
-      return { reviews: data || [], total: total || 0 };
+      const res = await db.query(
+        `SELECT * FROM ${REVIEWS_TABLE} WHERE consultant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [consultantId, limit, skip]
+      );
+      
+      return { reviews: res.rows, total };
     } catch (error) {
       console.error(`Failed to fetch reviews: ${error}`);
       return { reviews: [], total: 0 };
@@ -81,22 +70,15 @@ export class ReviewsService {
     skip: number = 0
   ): Promise<{ reviews: IReview[]; total: number }> {
     try {
-      // Get total count
-      const { count: total } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('*', { count: 'exact', head: true })
-        .eq('client_id', clientId);
+      const countRes = await db.query(`SELECT COUNT(*) FROM ${REVIEWS_TABLE} WHERE client_id = $1`, [clientId]);
+      const total = parseInt(countRes.rows[0].count, 10);
 
-      // Get paginated data
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false })
-        .range(skip, skip + limit - 1);
-
-      if (error) throw error;
-      return { reviews: data || [], total: total || 0 };
+      const res = await db.query(
+        `SELECT * FROM ${REVIEWS_TABLE} WHERE client_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [clientId, limit, skip]
+      );
+      
+      return { reviews: res.rows, total };
     } catch (error) {
       console.error(`Failed to fetch reviews: ${error}`);
       return { reviews: [], total: 0 };
@@ -108,22 +90,13 @@ export class ReviewsService {
    */
   async getConsultantAverageRating(consultantId: string): Promise<number> {
     try {
-      const { data, error } = await supabase
-        .rpc('get_consultant_average_rating', { consultant_id: consultantId });
-
-      if (error) {
-        // Fallback if RPC not available - fetch all and calculate
-        const { data: reviews } = await supabase
-          .from(REVIEWS_TABLE)
-          .select('rating')
-          .eq('consultant_id', consultantId);
-
-        if (!reviews || reviews.length === 0) return 0;
-        const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
-        return Math.round((sum / reviews.length) * 10) / 10;
-      }
-
-      return data?.[0]?.average_rating || 0;
+      const res = await db.query(
+        `SELECT AVG(rating) as average_rating FROM ${REVIEWS_TABLE} WHERE consultant_id = $1`,
+        [consultantId]
+      );
+      
+      if (!res.rows[0].average_rating) return 0;
+      return Math.round(parseFloat(res.rows[0].average_rating) * 10) / 10;
     } catch (error) {
       console.error(`Failed to fetch average rating: ${error}`);
       return 0;
@@ -137,16 +110,14 @@ export class ReviewsService {
     consultantId: string
   ): Promise<{ [key: number]: number }> {
     try {
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('rating')
-        .eq('consultant_id', consultantId);
-
-      if (error) throw error;
+      const res = await db.query(
+        `SELECT rating FROM ${REVIEWS_TABLE} WHERE consultant_id = $1`,
+        [consultantId]
+      );
 
       const distribution: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
-      data?.forEach((review) => {
+      res.rows.forEach((review) => {
         if (review.rating >= 1 && review.rating <= 5) {
           distribution[review.rating]++;
         }
@@ -167,15 +138,18 @@ export class ReviewsService {
     updateData: Partial<IReview>
   ): Promise<IReview | null> {
     try {
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .update({ ...updateData, updated_at: new Date().toISOString() })
-        .eq('id', reviewId)
-        .select()
-        .single();
+      const setClauses = Object.keys(updateData)
+        .map((key, i) => `${key} = $${i + 2}`)
+        .join(', ');
+      const values = [reviewId, ...Object.values(updateData)];
 
-      if (error) return null;
-      return data;
+      const res = await db.query(
+        `UPDATE ${REVIEWS_TABLE} SET ${setClauses}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+        values
+      );
+
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to update review: ${error}`);
       return null;
@@ -187,12 +161,7 @@ export class ReviewsService {
    */
   async deleteReview(reviewId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from(REVIEWS_TABLE)
-        .delete()
-        .eq('id', reviewId);
-
-      if (error) throw error;
+      await db.query(`DELETE FROM ${REVIEWS_TABLE} WHERE id = $1`, [reviewId]);
       return true;
     } catch (error) {
       console.error(`Failed to delete review: ${error}`);
@@ -205,21 +174,13 @@ export class ReviewsService {
    */
   async markHelpful(reviewId: string): Promise<IReview | null> {
     try {
-      // Get current helpful count
-      const current = await this.getReviewById(reviewId);
-      if (!current) return null;
+      const res = await db.query(
+        `UPDATE ${REVIEWS_TABLE} SET helpful = COALESCE(helpful, 0) + 1, updated_at = NOW() WHERE id = $1 RETURNING *`,
+        [reviewId]
+      );
 
-      const newHelpful = (current.helpful || 0) + 1;
-
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .update({ helpful: newHelpful, updated_at: new Date().toISOString() })
-        .eq('id', reviewId)
-        .select()
-        .single();
-
-      if (error) return null;
-      return data;
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
     } catch (error) {
       console.error(`Failed to mark review as helpful: ${error}`);
       return null;
@@ -231,13 +192,11 @@ export class ReviewsService {
    */
   async reviewExistsForBooking(bookingId: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase
-        .from(REVIEWS_TABLE)
-        .select('id')
-        .eq('booking_id', bookingId)
-        .single();
-
-      return !error && !!data;
+      const res = await db.query(
+        `SELECT id FROM ${REVIEWS_TABLE} WHERE booking_id = $1 LIMIT 1`,
+        [bookingId]
+      );
+      return res.rows.length > 0;
     } catch (error) {
       return false;
     }

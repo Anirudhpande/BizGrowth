@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import GlobalTrade from './global_trade.model';
 
+const qs = (v: any): string => (Array.isArray(v) ? v[0] : (v as string));
+
 // ============================================================
 // Global Trade Controller — /api/global-trade
 // ============================================================
@@ -15,22 +17,22 @@ const globalTradeController = {
     try {
       const { page, limit, search, country, category } = req.query;
       const result = await GlobalTrade.list({
-        page: page ? parseInt(page as string) : 1,
-        limit: limit ? parseInt(limit as string) : 12,
-        search: search as string,
-        country: country as string,
-        category: category as string,
+        page: page ? parseInt(qs(page)) : 1,
+        limit: limit ? parseInt(qs(limit)) : 12,
+        search: search ? qs(search) : undefined,
+        country: country ? qs(country) : undefined,
+        category: category ? qs(category) : undefined,
       });
 
-      const totalPages = Math.ceil(result.total / (limit ? parseInt(limit as string) : 12));
+      const totalPages = Math.ceil(result.total / (limit ? parseInt(qs(limit)) : 12));
 
       res.status(200).json({
         success: true,
         data: result.listings,
         pagination: {
           total: result.total,
-          page: page ? parseInt(page as string) : 1,
-          limit: limit ? parseInt(limit as string) : 12,
+          page: page ? parseInt(qs(page)) : 1,
+          limit: limit ? parseInt(qs(limit)) : 12,
           totalPages,
         },
       });
@@ -65,12 +67,13 @@ const globalTradeController = {
    */
   async getListingById(req: Request, res: Response): Promise<void> {
     try {
-      const listing = await GlobalTrade.findById(req.params.id as string);
+      const id = qs(req.params['id']);
+      const listing = await GlobalTrade.findById(id);
       if (!listing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
       }
-      await GlobalTrade.incrementViews(req.params.id as string);
+      await GlobalTrade.incrementViews(id);
       res.status(200).json({ success: true, data: listing });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -115,8 +118,9 @@ const globalTradeController = {
     try {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
+      const id = qs(req.params['id']);
 
-      const existing = await GlobalTrade.findById(req.params.id as string);
+      const existing = await GlobalTrade.findById(id);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -126,7 +130,7 @@ const globalTradeController = {
         return;
       }
 
-      const updated = await GlobalTrade.update(req.params.id as string, req.body);
+      const updated = await GlobalTrade.update(id, req.body);
       res.status(200).json({ success: true, data: updated });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -142,8 +146,9 @@ const globalTradeController = {
     try {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
+      const id = qs(req.params['id']);
 
-      const existing = await GlobalTrade.findById(req.params.id as string);
+      const existing = await GlobalTrade.findById(id);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -153,7 +158,7 @@ const globalTradeController = {
         return;
       }
 
-      await GlobalTrade.delete(req.params.id as string);
+      await GlobalTrade.delete(id);
       res.status(200).json({ success: true, message: 'Listing deleted successfully' });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import IndiaTrade from './india_trade.model';
 
+const qs = (v: any): string => (Array.isArray(v) ? v[0] : (v as string));
+
 // ============================================================
 // India Trade Controller — /api/india-trade
 // ============================================================
@@ -15,23 +17,23 @@ const indiaTradeController = {
     try {
       const { page, limit, search, state, category, targetMarket } = req.query;
       const result = await IndiaTrade.list({
-        page: page ? parseInt(page as string) : 1,
-        limit: limit ? parseInt(limit as string) : 12,
-        search: search as string,
-        state: state as string,
-        category: category as string,
-        targetMarket: targetMarket as string,
+        page: page ? parseInt(qs(page)) : 1,
+        limit: limit ? parseInt(qs(limit)) : 12,
+        search: search ? qs(search) : undefined,
+        state: state ? qs(state) : undefined,
+        category: category ? qs(category) : undefined,
+        targetMarket: targetMarket ? qs(targetMarket) : undefined,
       });
 
-      const totalPages = Math.ceil(result.total / (limit ? parseInt(limit as string) : 12));
+      const totalPages = Math.ceil(result.total / (limit ? parseInt(qs(limit)) : 12));
 
       res.status(200).json({
         success: true,
         data: result.listings,
         pagination: {
           total: result.total,
-          page: page ? parseInt(page as string) : 1,
-          limit: limit ? parseInt(limit as string) : 12,
+          page: page ? parseInt(qs(page)) : 1,
+          limit: limit ? parseInt(qs(limit)) : 12,
           totalPages,
         },
       });
@@ -66,12 +68,13 @@ const indiaTradeController = {
    */
   async getListingById(req: Request, res: Response): Promise<void> {
     try {
-      const listing = await IndiaTrade.findById(req.params.id as string);
+      const id = qs(req.params['id']);
+      const listing = await IndiaTrade.findById(id);
       if (!listing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
       }
-      await IndiaTrade.incrementViews(req.params.id as string);
+      await IndiaTrade.incrementViews(id);
       res.status(200).json({ success: true, data: listing });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -116,8 +119,9 @@ const indiaTradeController = {
     try {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
+      const id = qs(req.params['id']);
 
-      const existing = await IndiaTrade.findById(req.params.id as string);
+      const existing = await IndiaTrade.findById(id);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -127,7 +131,7 @@ const indiaTradeController = {
         return;
       }
 
-      const updated = await IndiaTrade.update(req.params.id as string, req.body);
+      const updated = await IndiaTrade.update(id, req.body);
       res.status(200).json({ success: true, data: updated });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
@@ -143,8 +147,9 @@ const indiaTradeController = {
     try {
       const userId = (req as any).user?.id;
       const userRole = (req as any).user?.role;
+      const id = qs(req.params['id']);
 
-      const existing = await IndiaTrade.findById(req.params.id as string);
+      const existing = await IndiaTrade.findById(id);
       if (!existing) {
         res.status(404).json({ success: false, message: 'Listing not found' });
         return;
@@ -154,7 +159,7 @@ const indiaTradeController = {
         return;
       }
 
-      await IndiaTrade.delete(req.params.id as string);
+      await IndiaTrade.delete(id);
       res.status(200).json({ success: true, message: 'Listing deleted successfully' });
     } catch (error) {
       res.status(500).json({ success: false, message: (error as Error).message });
