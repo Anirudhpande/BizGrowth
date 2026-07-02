@@ -182,6 +182,16 @@ export interface OrganizationRow {
   name: string;
   description: string | null;
   industry: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  linkedin_url: string | null;
+  logo_url: string | null;
+  size: string | null;
+  founded_year: number | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
   user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -192,6 +202,16 @@ export interface IOrganization {
   name: string;
   description: string;
   industry: string;
+  email: string;
+  phone: string;
+  website: string;
+  linkedinUrl: string;
+  logoUrl: string;
+  size: string;
+  foundedYear: number | null;
+  city: string;
+  state: string;
+  country: string;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -201,12 +221,32 @@ export interface CreateOrganizationInput {
   name: string;
   description?: string;
   industry?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  linkedinUrl?: string;
+  logoUrl?: string;
+  size?: string;
+  foundedYear?: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 export interface UpdateOrganizationInput {
   name?: string;
   description?: string;
   industry?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  linkedinUrl?: string;
+  logoUrl?: string;
+  size?: string;
+  foundedYear?: number;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 // ============================================================

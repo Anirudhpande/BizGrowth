@@ -20,6 +20,16 @@ export function mapRowToOrganization(row: OrganizationRow): IOrganization {
     name: row.name,
     description: row.description || '',
     industry: row.industry || '',
+    email: row.email || '',
+    phone: row.phone || '',
+    website: row.website || '',
+    linkedinUrl: row.linkedin_url || '',
+    logoUrl: row.logo_url || '',
+    size: row.size || '',
+    foundedYear: row.founded_year || null,
+    city: row.city || '',
+    state: row.state || '',
+    country: row.country || '',
     userId: row.user_id || '',
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -68,8 +78,10 @@ class OrganizationsModel {
     input: CreateOrganizationInput
   ): Promise<IOrganization> {
     const queryText = `
-      INSERT INTO public.organizations (name, description, industry, user_id)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO public.organizations (
+        name, description, industry, email, phone, website, linkedin_url, logo_url, size, founded_year, city, state, country, user_id
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *
     `;
     try {
@@ -77,6 +89,16 @@ class OrganizationsModel {
         input.name,
         input.description || '',
         input.industry || '',
+        input.email || '',
+        input.phone || '',
+        input.website || '',
+        input.linkedinUrl || '',
+        input.logoUrl || '',
+        input.size || '',
+        input.foundedYear || null,
+        input.city || '',
+        input.state || '',
+        input.country || '',
         userId,
       ]);
       return mapRowToOrganization(rows[0] as OrganizationRow);
@@ -108,6 +130,46 @@ class OrganizationsModel {
     if (input.industry !== undefined) {
       updates.push(`industry = $${paramIdx++}`);
       params.push(input.industry);
+    }
+    if (input.email !== undefined) {
+      updates.push(`email = $${paramIdx++}`);
+      params.push(input.email);
+    }
+    if (input.phone !== undefined) {
+      updates.push(`phone = $${paramIdx++}`);
+      params.push(input.phone);
+    }
+    if (input.website !== undefined) {
+      updates.push(`website = $${paramIdx++}`);
+      params.push(input.website);
+    }
+    if (input.linkedinUrl !== undefined) {
+      updates.push(`linkedin_url = $${paramIdx++}`);
+      params.push(input.linkedinUrl);
+    }
+    if (input.logoUrl !== undefined) {
+      updates.push(`logo_url = $${paramIdx++}`);
+      params.push(input.logoUrl);
+    }
+    if (input.size !== undefined) {
+      updates.push(`size = $${paramIdx++}`);
+      params.push(input.size);
+    }
+    if (input.foundedYear !== undefined) {
+      updates.push(`founded_year = $${paramIdx++}`);
+      params.push(input.foundedYear);
+    }
+    if (input.city !== undefined) {
+      updates.push(`city = $${paramIdx++}`);
+      params.push(input.city);
+    }
+    if (input.state !== undefined) {
+      updates.push(`state = $${paramIdx++}`);
+      params.push(input.state);
+    }
+    if (input.country !== undefined) {
+      updates.push(`country = $${paramIdx++}`);
+      params.push(input.country);
     }
 
     if (updates.length === 0) {
