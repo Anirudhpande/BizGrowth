@@ -1,3 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS analytics;
+
 CREATE FUNCTION analytics.events_per_hour(days integer DEFAULT 7)
 RETURNS TABLE(hour timestamptz, cnt bigint)
 LANGUAGE plpgsql

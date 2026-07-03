@@ -288,6 +288,8 @@ class UsersModel {
       if (input.status !== undefined) {
         profileUpdates.push(`status = $${paramIdx++}::user_status`);
         profileParams.push(input.status);
+        userUpdates.push(`status = $${userParamIdx++}`);
+        userParams.push(input.status);
       }
       if (input.email !== undefined) {
         const emailLower = input.email.toLowerCase();

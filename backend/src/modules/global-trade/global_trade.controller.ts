@@ -48,7 +48,7 @@ const globalTradeController = {
    */
   async getMyListings(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Unauthorized' });
         return;
@@ -87,7 +87,7 @@ const globalTradeController = {
    */
   async createListing(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Unauthorized' });
         return;
@@ -116,7 +116,7 @@ const globalTradeController = {
    */
   async updateListing(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       const userRole = (req as any).user?.role;
       const id = qs(req.params['id']);
 
@@ -144,7 +144,7 @@ const globalTradeController = {
    */
   async deleteListing(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       const userRole = (req as any).user?.role;
       const id = qs(req.params['id']);
 

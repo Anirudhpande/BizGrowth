@@ -1,7 +1,7 @@
 import React from 'react';
-import LineChart from './widgets/LineChart';
+import LineChart from './Widget/LineChart';
 import BarChart from './widgets/BarChart';
-import Sparkline from './widgets/Sparkline';
+import Sparkline from './Widget/Sparkline';
 
 const DashboardSVG: React.FC = () => {
   return (

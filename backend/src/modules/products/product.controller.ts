@@ -42,7 +42,7 @@ const productController = {
    */
   async getMyProducts(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Unauthorized' });
         return;
@@ -80,7 +80,7 @@ const productController = {
    */
   async createProduct(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       if (!userId) {
         res.status(401).json({ success: false, message: 'Unauthorized' });
         return;
@@ -109,7 +109,7 @@ const productController = {
    */
   async updateProduct(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       const userRole = (req as any).user?.role;
 
       const existing = await Product.findById(req.params.id as string);
@@ -136,7 +136,7 @@ const productController = {
    */
   async deleteProduct(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.userId;
       const userRole = (req as any).user?.role;
 
       const existing = await Product.findById(req.params.id as string);

@@ -71,13 +71,23 @@ class AdminModel {
    * Update user status (suspend/activate).
    */
   async updateUserStatus(userId: string, status: string): Promise<void> {
+    const client = await db.pool.connect();
     try {
-      await db.query(
+      await client.query('BEGIN');
+      await client.query(
         `UPDATE public.users SET status = $1, updated_at = NOW() WHERE id = $2`,
         [status, userId]
       );
+      await client.query(
+        `UPDATE public.profiles SET status = $1::user_status, updated_at = NOW() WHERE auth_user_id = $2`,
+        [status, userId]
+      );
+      await client.query('COMMIT');
     } catch (error) {
+      await client.query('ROLLBACK');
       throw new Error(`Database error: ${(error as Error).message}`);
+    } finally {
+      client.release();
     }
   }
 
@@ -85,13 +95,23 @@ class AdminModel {
    * Update user role.
    */
   async updateUserRole(userId: string, role: string): Promise<void> {
+    const client = await db.pool.connect();
     try {
-      await db.query(
+      await client.query('BEGIN');
+      await client.query(
         `UPDATE public.users SET role = $1, updated_at = NOW() WHERE id = $2`,
         [role, userId]
       );
+      await client.query(
+        `UPDATE public.profiles SET role = $1::user_role, updated_at = NOW() WHERE auth_user_id = $2`,
+        [role, userId]
+      );
+      await client.query('COMMIT');
     } catch (error) {
+      await client.query('ROLLBACK');
       throw new Error(`Database error: ${(error as Error).message}`);
+    } finally {
+      client.release();
     }
   }
 
