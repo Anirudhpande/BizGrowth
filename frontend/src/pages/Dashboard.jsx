@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 import PaymentModal from '../components/PaymentModal';
 import ReviewModal from '../components/ReviewModal';
 import ImageUpload from '../components/ImageUpload';
+import RecommendationsWidget from '../components/RecommendationsWidget';
 
 
 export default function Dashboard() {
@@ -550,7 +551,21 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Recent Bookings Card */}
+              {/* AI Recommendations */}
+              <div className="md:col-span-3 bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-headline-md text-headline-md text-primary font-bold flex items-center gap-2">
+                      <span className="material-symbols-outlined text-secondary">auto_awesome</span>
+                      Recommended For You
+                    </h3>
+                    <p className="text-body-sm text-on-surface-variant mt-0.5">Personalised B2B opportunities matched to your industry</p>
+                  </div>
+                  <a href="/marketplace" className="text-body-sm text-secondary hover:underline font-bold">Browse All</a>
+                </div>
+                <RecommendationsWidget />
+              </div>
+
               <div className="bg-surface-container-low border border-outline-variant/30 p-6 rounded-2xl shadow-sm md:col-span-2 space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-headline-md text-headline-md text-primary font-bold">Recent Bookings</h3>

@@ -1,5 +1,6 @@
 import db from '../../config/db';
 import { INotification } from './notifications.model';
+import { sendRealTimeUpdate } from '../../config/websocket';
 
 const NOTIFICATIONS_TABLE = 'notifications';
 
@@ -25,7 +26,14 @@ export class NotificationsService {
       );
 
       const notification = res.rows[0];
-      // Send via channels
+      // Push real-time update to connected user immediately
+      sendRealTimeUpdate(userId, 'notification', {
+        id: notification.id,
+        title,
+        message,
+        type,
+      });
+      // Send via other channels (email, push, etc.)
       await this.sendViaChannels(notification);
       return notification;
     } catch (error) {

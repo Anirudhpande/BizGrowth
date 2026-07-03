@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../utils/api'
+
+const WS_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000')
+  .replace(/^http/, 'ws')
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -9,27 +12,62 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const wsRef = useRef(null)
 
   const handleLogout = () => {
     logout()
     navigate('/')
   }
 
+  // ── Load initial unread count via REST, then upgrade to WebSocket ──
   useEffect(() => {
     if (!user) return
-    const fetchNotifications = async () => {
+
+    // Initial HTTP fetch for badge count
+    const fetchInitialCount = async () => {
       try {
         const notifs = await api.get(`/api/notifications/user/${user.id}`)
         const list = notifs?.notifications || []
-        const count = list.filter(n => !n.is_read).length
-        setUnreadNotifications(count)
+        setUnreadNotifications(list.filter(n => !n.read).length)
       } catch (err) {
-        console.error('Failed to load notifications in navbar:', err)
+        console.error('Failed to load notifications:', err)
       }
     }
-    fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
+    fetchInitialCount()
+
+    // WebSocket upgrade for real-time badge updates
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const connect = () => {
+      const ws = new WebSocket(`${WS_URL}?token=${token}`)
+      wsRef.current = ws
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+          // Any notification event → increment badge
+          if (msg.type === 'notification') {
+            setUnreadNotifications(prev => prev + 1)
+          }
+        } catch {}
+      }
+
+      ws.onclose = () => {
+        // Auto-reconnect after 5s if user still logged in
+        setTimeout(() => {
+          if (localStorage.getItem('token')) connect()
+        }, 5000)
+      }
+
+      ws.onerror = () => ws.close()
+    }
+
+    connect()
+
+    return () => {
+      if (wsRef.current) wsRef.current.close()
+    }
   }, [user])
 
   useEffect(() => {

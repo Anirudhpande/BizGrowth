@@ -14,6 +14,7 @@ import contentRoutes from './modules/content/content.routes';
 import consultantsRoutes from './modules/consultants/consultants.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import uploadRoutes from './modules/upload/upload.routes';
+import recommendationsRoutes from './modules/recommendations/recommendations.routes';
 
 // Route imports - Phase 2 & 3
 import {
@@ -146,6 +147,9 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/global-trade', globalTradeRouter);
 app.use('/api/india-trade', indiaTradeRouter);
 app.use('/api/products', productRouter);
+
+// Phase 5 - AI Recommendations
+app.use('/api/recommendations', recommendationsRoutes);
 
 // ---- Health Check ----
 app.get('/api/health', (_req: Request, res: Response) => {
