@@ -63,6 +63,6 @@ INSERT INTO public.product_listings (id, user_id, name, description, price, stoc
 ('99000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000005', 'Premium Long Grain Basmati', 'Aged 12 months for rich aroma and flavor.', 120.00, 5000, 'Agriculture', 'India', 98);
 
 -- 10. Seed Events
-INSERT INTO public.events (id, title, description, event_date, location, capacity, organizer_id) VALUES
-('ee000000-0000-0000-0000-000000000001', 'Surat Textile Expo 2026', 'Networking event for textile suppliers, exporters, and clothing labels.', '2026-10-15 10:00:00+05:30', 'Exhibition Centre, Surat', 300, '10000000-0000-0000-0000-000000000001'),
-('ee000000-0000-0000-0000-000000000002', 'B2B Global Trade Summit', 'Panel discussion with trade advisors and custom agents.', '2026-12-05 14:00:00+05:30', 'Virtual Zoom Event', 1000, '10000000-0000-0000-0000-000000000001');
+INSERT INTO public.events (id, title, description, type, event_date, location, capacity, organizer_id) VALUES
+('ee000000-0000-0000-0000-000000000001', 'Surat Textile Expo 2026', 'Networking event for textile suppliers, exporters, and clothing labels.', 'networking', '2026-10-15 10:00:00+05:30', 'Exhibition Centre, Surat', 300, '10000000-0000-0000-0000-000000000001'),
+('ee000000-0000-0000-0000-000000000002', 'B2B Global Trade Summit', 'Panel discussion with trade advisors and custom agents.', 'webinar', '2026-12-05 14:00:00+05:30', 'Virtual Zoom Event', 1000, '10000000-0000-0000-0000-000000000001');

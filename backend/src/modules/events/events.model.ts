@@ -14,13 +14,15 @@ import {
 // ============================================================
 
 export function mapRowToEvent(row: EventRow, attendeeCount?: number): IEvent {
+  const eventDateObj = new Date(row.event_date);
   return {
     id: row.id,
     title: row.title,
     description: row.description || '',
     type: row.type,
     status: row.status,
-    eventDate: new Date(row.event_date),
+    eventDate: eventDateObj,
+    date: eventDateObj, // Add fallback for frontend e.date references
     endDate: row.end_date ? new Date(row.end_date) : null,
     location: row.location || '',
     isVirtual: row.is_virtual,
