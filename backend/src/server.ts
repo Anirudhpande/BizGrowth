@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
 import dns from 'dns';
+import path from 'path';
 
-// Load environment variables FIRST, before any other imports
-dotenv.config();
+// Load environment variables relative to the script directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Force IPv4 resolution to prevent ENETUNREACH on IPv6 addresses
 dns.setDefaultResultOrder('ipv4first');

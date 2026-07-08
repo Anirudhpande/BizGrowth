@@ -37,11 +37,16 @@ import {
 // Middleware imports
 import errorHandler from './middleware/errorHandler';
 
+import path from 'path';
+
 // ============================================================
 // Express Application Setup
 // ============================================================
 
 const app: Application = express();
+
+// Serve local uploads folder statically
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ---- Security Middleware ----
 app.use(helmet());

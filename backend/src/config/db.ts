@@ -1,7 +1,9 @@
 import { Pool, QueryResult } from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config();
+// Load environment variables relative to the script directory
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const connectionString = process.env.DATABASE_URL;
 
