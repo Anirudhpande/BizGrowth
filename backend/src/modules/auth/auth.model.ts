@@ -166,7 +166,7 @@ class UserModel {
       // 2. Insert credentials into public.users
       const insertUserQuery = `
         INSERT INTO public.users (email, password_hash, first_name, last_name, role)
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5::public.user_role)
         RETURNING id, email, created_at, updated_at
       `;
       
