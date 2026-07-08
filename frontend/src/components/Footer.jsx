@@ -8,7 +8,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-primary-container dark:bg-surface-container-lowest w-full relative border-t border-outline-variant/20 shadow-none z-10">
-      <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-16 grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Brand Column */}
         <div className="col-span-1 flex flex-col gap-4">
           <div className="flex items-center gap-2">
@@ -32,20 +32,6 @@ export default function Footer() {
           <Link to="/resources" className="font-body-sm text-body-sm text-outline-variant dark:text-outline hover:text-white dark:hover:text-primary transition-colors hover:underline">
             Resources
           </Link>
-        </div>
-
-        {/* Links Column 2: Legal */}
-        <div className="col-span-1 flex flex-col gap-3">
-          <h4 className="font-label-md text-label-md text-on-primary-container dark:text-on-surface font-semibold mb-2 uppercase tracking-wider">Legal</h4>
-          <a href="#" className="font-body-sm text-body-sm text-outline-variant dark:text-outline hover:text-white dark:hover:text-primary transition-colors hover:underline">
-            Privacy Policy
-          </a>
-          <a href="#" className="font-body-sm text-body-sm text-outline-variant dark:text-outline hover:text-white dark:hover:text-primary transition-colors hover:underline">
-            Terms of Service
-          </a>
-          <a href="#" className="font-body-sm text-body-sm text-outline-variant dark:text-outline hover:text-white dark:hover:text-primary transition-colors hover:underline">
-            Contact Support
-          </a>
         </div>
 
         {/* Subscribe Column */}
@@ -72,7 +58,7 @@ export default function Footer() {
         </div>
 
         {/* Copyright Indicator */}
-        <div className="col-span-1 md:col-span-4 mt-8 pt-8 border-t border-outline-variant/10 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="col-span-1 md:col-span-3 mt-8 pt-8 border-t border-outline-variant/10 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-body-sm text-body-sm text-outline-variant dark:text-outline">
             © 2026 BizGrowth Enterprise. All rights reserved.
           </p>

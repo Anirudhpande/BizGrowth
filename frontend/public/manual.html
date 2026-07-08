@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BizGrowth User Manual - Complete Guide</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* CSS Variables matching BizGrowth theme */
+    :root {
+      --primary: #000615;
+      --secondary: #2c57c1;
+      --background: #f8f9ff;
+      --surface: #ffffff;
+      --on-surface: #131c28;
+      --outline-variant: #c4c6ce;
+      --error: #ba1a1a;
+      
+      --font-heading: 'Manrope', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--on-surface);
+      background-color: var(--background);
+      line-height: 1.6;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Print styling & Page Control */
+    @page {
+      size: A4;
+      margin: 20mm 15mm 20mm 15mm;
+    }
+
+    @media print {
+      body {
+        background-color: #ffffff;
+        color: #000000;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+      .page {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        max-width: 100% !important;
+      }
+      a {
+        text-decoration: none;
+        color: #000000;
+      }
+    }
+
+    /* Web Preview Styling */
+    .no-print-banner {
+      background-color: var(--secondary);
+      color: #ffffff;
+      padding: 12px 24px;
+      text-align: center;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .no-print-banner button {
+      background: #ffffff;
+      color: var(--secondary);
+      border: none;
+      padding: 6px 16px;
+      margin-left: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .no-print-banner button:hover {
+      background: #f0f0f0;
+    }
+
+    .page {
+      max-width: 800px;
+      margin: 30px auto;
+      background: var(--surface);
+      padding: 40px 50px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    /* Document Structure Elements */
+    h1, h2, h3, h4 {
+      font-family: var(--font-heading);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--background);
+      padding-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-bottom: 1.5rem;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      color: #334155;
+    }
+
+    /* Cover Page Specifics */
+    .cover-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .logo-badge {
+      width: 100px;
+      height: 100px;
+      background: var(--secondary);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 20px -5px rgba(44, 87, 193, 0.3);
+    }
+
+    .logo-badge svg {
+      width: 60px;
+      height: 60px;
+      fill: #ffffff;
+    }
+
+    .cover-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .cover-subtitle {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 3rem;
+    }
+
+    .cover-info-box {
+      background-color: var(--background);
+      border: 1px solid var(--outline-variant);
+      border-radius: 12px;
+      padding: 24px 40px;
+      max-width: 500px;
+      margin-bottom: 4rem;
+    }
+
+    .cover-info-box p {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .cover-info-box a {
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .cover-scope-list {
+      text-align: left;
+      list-style: none;
+      padding: 0;
+      margin-top: 1.5rem;
+    }
+
+    .cover-scope-list li {
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      font-weight: 550;
+      color: #334155;
+    }
+
+    .cover-scope-list li::before {
+      content: "•";
+      color: var(--secondary);
+      font-weight: bold;
+      display: inline-block; 
+      width: 1.5em;
+      font-size: 1.2rem;
+    }
+
+    .footer-stamp {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: auto;
+      font-weight: 500;
+    }
+
+    /* Table of Contents */
+    .toc-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 2rem 0;
+    }
+
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 0.75rem;
+      font-size: 1.05rem;
+      font-weight: 500;
+    }
+
+    .toc-item a {
+      text-decoration: none;
+      color: var(--primary);
+    }
+
+    .toc-item::after {
+      content: "";
+      flex-grow: 1;
+      border-bottom: 1px dotted #cbd5e1;
+      margin: 0 10px 4px 10px;
+    }
+
+    .toc-page {
+      color: var(--secondary);
+      font-weight: 600;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid var(--outline-variant);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--background);
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Callout alert boxes */
+    .alert-box {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border-left: 4px solid;
+    }
+
+    .alert-note {
+      background-color: #f0fdf4;
+      border-left-color: #16a34a;
+      color: #14532d;
+    }
+
+    .alert-important {
+      background-color: #fefff0;
+      border-left-color: #cca830;
+      color: #4f3e00;
+    }
+
+    .alert-warning {
+      background-color: #fef2f2;
+      border-left-color: #dc2626;
+      color: #7f1d1d;
+    }
+
+    .alert-icon {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    /* Flowcharts & Mermaid replacements */
+    .flowchart {
+      background-color: var(--background);
+      border: 1px solid var(--outline-variant);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 1.5rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .flow-node {
+      background: var(--surface);
+      border: 1px solid var(--secondary);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      text-align: center;
+      min-width: 180px;
+    }
+
+    .flow-arrow {
+      color: var(--secondary);
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .flow-split {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      width: 100%;
+    }
+
+    .header-rule {
+      border-bottom: 2px solid var(--primary);
+      margin-bottom: 2rem;
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Web-Only Print Banner -->
+  <div class="no-print no-print-banner">
+    📄 You are previewing the BizGrowth User Manual.
+    <button onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <!-- PAGE 1: COVER -->
+  <div class="page">
+    <div class="cover-container">
+      <div class="logo-badge">
+        <!-- SVG Icon representing network nodes growing -->
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+        </svg>
+      </div>
+      <h1 class="cover-title">BIZGROWTH</h1>
+      <div class="cover-subtitle">Complete User &amp; Administration Manual</div>
+      
+      <div class="cover-info-box">
+        <p>Version 1.0 | July 2026</p>
+        <p>Platform: <a href="https://bizgrowth.vercel.app" target="_blank">https://bizgrowth.vercel.app</a></p>
+        
+        <ul class="cover-scope-list">
+          <li>MSMEs &amp; Corporates (Client Nodes)</li>
+          <li>Strategic Consultants &amp; Advisors</li>
+          <li>Trade Organizations &amp; Government Reps</li>
+          <li>Platform Administrators &amp; Moderators</li>
+        </ul>
+      </div>
+      
+      <div class="footer-stamp">
+        BizGrowth Development Team | Proprietary &amp; Confidential
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2: TABLE OF CONTENTS -->
+  <div class="page page-break">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Table of Contents</span>
+    </div>
+    
+    <h1>Table of Contents</h1>
+    <ul class="toc-list">
+      <li class="toc-item"><a href="#section1">1. Getting Started — Registration &amp; Activation</a><span class="toc-page">3</span></li>
+      <li class="toc-item"><a href="#section2">2. Dashboard &amp; Enterprise Node Interface</a><span class="toc-page">4</span></li>
+      <li class="toc-item"><a href="#section3">3. B2B Marketplace &amp; Smart Matchmaking</a><span class="toc-page">5</span></li>
+      <li class="toc-item"><a href="#section4">4. Import-Export &amp; Global Trade Portals</a><span class="toc-page">6</span></li>
+      <li class="toc-item"><a href="#section5">5. Consultant Hub &amp; Booking System</a><span class="toc-page">7</span></li>
+      <li class="toc-item"><a href="#section6">6. Products, Events &amp; Knowledge Hub</a><span class="toc-page">8</span></li>
+      <li class="toc-item"><a href="#section7">7. Communication &amp; Real-time Messaging</a><span class="toc-page">9</span></li>
+      <li class="toc-item"><a href="#section8">8. Platform Administration &amp; Moderation</a><span class="toc-page">10</span></li>
+      <li class="toc-item"><a href="#section9">9. Roles &amp; Access Summary</a><span class="toc-page">11</span></li>
+      <li class="toc-item"><a href="#section10">10. Key Concepts, Glossary &amp; Troubleshooting</a><span class="toc-page">12</span></li>
+    </ul>
+  </div>
+
+  <!-- PAGE 3: SECTION 1 -->
+  <div class="page page-break" id="section1">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 1: Getting Started</span>
+    </div>
+    
+    <h1>1. Getting Started — Registration &amp; Activation</h1>
+    
+    <h3>1.1 Creating a Client Account (Corporate / MSME)</h3>
+    <p>To access the B2B marketplace, global trade directories, and products catalog, you must register your enterprise node:</p>
+    <ul>
+      <li>Navigate to the landing page and click <strong>Register</strong> (or access <a href="/register">/register</a>).</li>
+      <li>Fill in the registration form with your email, full name, secure password (minimum 8 characters).</li>
+      <li>Select <strong>Client Node (Corporate / MSME)</strong> from the Enterprise Role dropdown.</li>
+      <li>Click <strong>Register Account</strong> to create your credentials.</li>
+    </ul>
+    
+    <div class="alert-box alert-note">
+      <span class="alert-icon">💡</span>
+      <div>
+        <strong>TIP:</strong> Stating your official business email (such as sales@yourcompany.com) speeds up the organization approval process in the verification queue.
+      </div>
+    </div>
+
+    <h3>1.2 Creating a Strategic Consultant Profile</h3>
+    <p>If you are an advisor offering strategy, tax planning, custom clearances, ESG audits, or technology advisory services:</p>
+    <ul>
+      <li>Go to the signup form at <a href="/register">/register</a>.</li>
+      <li>Fill in details and select <strong>Strategic Consultant</strong> from the role options.</li>
+      <li>After registering, you will be redirected to <a href="/consultants/setup">/consultants/setup</a> to input expertises, hourly billing rates, and booking slots.</li>
+    </ul>
+
+    <div class="alert-box alert-important">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>IMPORTANT:</strong> Consultant profiles remain hidden from public searches until availability slots are defined and saved on the configuration page.
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: SECTION 2 -->
+  <div class="page page-break" id="section2">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 2: Node Interface</span>
+    </div>
+    
+    <h1>2. Dashboard &amp; Enterprise Node Interface</h1>
+    
+    <h3>2.1 Workspace Overview</h3>
+    <p>The dashboard (<a href="/dashboard">/dashboard</a>) acts as your command room, displaying the following panels:</p>
+    <ul>
+      <li><strong>Enterprise Metrics:</strong> Active views of profile validation status, listing statistics, and message notifications.</li>
+      <li><strong>Matchmaking Opportunities:</strong> Dynamic partner cards calculated by comparing your tags with listing tags in the database.</li>
+      <li><strong>Booked Sessions:</strong> List of upcoming consultation calls and business discussions with calendar details.</li>
+    </ul>
+
+    <h3>2.2 Organization Profile Setup</h3>
+    <p>To list items or submit export details, you must create a verified business profile:</p>
+    <ol>
+      <li>Go to <strong>My Organizations</strong> or access <a href="/organizations">/organizations</a>.</li>
+      <li>Click <strong>Create Organization Profile</strong> to open the form (<a href="/organizations/new">/organizations/new</a>).</li>
+      <li>Enter company name, select industry group, input location details, website link, and enterprise description.</li>
+      <li>Upload logo images and registry credentials.</li>
+      <li>Submit. Profile goes into the admin verification queue.</li>
+    </ol>
+
+    <div class="alert-box alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>WARNING:</strong> Incomplete profile details or blank website domains will flag the organization as unverified, limiting listing privileges.
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 5: SECTION 3 -->
+  <div class="page page-break" id="section3">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 3: B2B Marketplace</span>
+    </div>
+    
+    <h1>3. B2B Marketplace &amp; Smart Matchmaking</h1>
+    
+    <h3>3.1 Creating Marketplace Listings</h3>
+    <p>The B2B marketplace (<a href="/marketplace">/marketplace</a>) is where MSMEs and Corporates collaborate on trading and inventory options:</p>
+    <ul>
+      <li>Navigate to the marketplace board and click <strong>Post Opportunity</strong> (<a href="/marketplace/new">/marketplace/new</a>).</li>
+      <li>Input listing title and select type: <strong>Buy</strong>, <strong>Sell</strong>, <strong>Partner</strong>, or <strong>Barter</strong>.</li>
+      <li>Enter description details and specify tag arrays (e.g., Basmati, Export, Logistics).</li>
+      <li>Save. Listing goes live on the marketplace grid.</li>
+    </ul>
+
+    <h3>3.2 Matchmaking Logic Flowchart</h3>
+    <p>The recommendation system runs tag matches against active database listings:</p>
+    
+    <div class="flowchart">
+      <div class="flow-node">User Listing Created (Tags: "cotton", "barter")</div>
+      <div class="flow-arrow">▼</div>
+      <div class="flow-node">Backend Similarity Engine</div>
+      <div class="flow-arrow">▼</div>
+      <div class="flow-split">
+        <div class="flow-node" style="border-color:#16a34a">Score &gt; Threshold<br>Show Match Card</div>
+        <div class="flow-node" style="border-color:#dc2626">Score &lt; Threshold<br>Ignore Listing</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 6: SECTION 4 -->
+  <div class="page page-break" id="section4">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 4: Import-Export</span>
+    </div>
+    
+    <h1>4. Import-Export &amp; Global Trade Portals</h1>
+    <p>BizGrowth facilitates international trade via dedicated state and global directories:</p>
+
+    <h3>4.1 India to Global Directory</h3>
+    <p>For Indian manufacturers seeking global markets (<a href="/india-to-global">/india-to-global</a>):</p>
+    <ul>
+      <li>Exporters can view active global buy requests and target import regions.</li>
+      <li>Click <strong>Post Export Offer</strong> to list item supplies, state origins (e.g., Gujarat, Punjab), packaging limits, and shipping details.</li>
+    </ul>
+
+    <h3>4.2 Global to India Directory</h3>
+    <p>For foreign entities seeking suppliers in India (<a href="/global-to-india">/global-to-india</a>):</p>
+    <ul>
+      <li>International users list component requirements and targeted supply cities.</li>
+      <li>Verified Indian entities can bid on requests and initiate supply contracts directly.</li>
+    </ul>
+
+    <table style="margin-top:20px">
+      <thead>
+        <tr>
+          <th>Portal Segment</th>
+          <th>Primary User</th>
+          <th>Action Required</th>
+          <th>Goal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>India to Global</strong></td>
+          <td>Indian Manufacturers</td>
+          <td>Create export catalog cards</td>
+          <td>Reach global distribution channels</td>
+        </tr>
+        <tr>
+          <td><strong>Global to India</strong></td>
+          <td>International Buyers</td>
+          <td>Create import sourcing requirements</td>
+          <td>Locate low-cost quality suppliers in India</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGE 7: SECTION 5 -->
+  <div class="page page-break" id="section5">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 5: Consultant Hub</span>
+    </div>
+    
+    <h1>5. Consultant Hub &amp; Booking System</h1>
+    
+    <h3>5.1 Booking a Session with a Consultant</h3>
+    <p>Businesses requiring financial, compliance, or logistics audits can book sessions with strategic advisors:</p>
+    <ul>
+      <li>Go to the Advisor Search registry at <a href="/consultants">/consultants</a>.</li>
+      <li>Filter profiles by core expertise (e.g. Taxations, ESG, customs clearances).</li>
+      <li>Click <strong>View Profile</strong> and select <strong>Book Consultation</strong>.</li>
+      <li>Select an available slot and click <strong>Proceed to Payment</strong> to invoke the booking confirmation modal.</li>
+    </ul>
+
+    <h3>5.2 Availability Slots Setup</h3>
+    <p>Consultants configure weekly availability slots to receive bookings:</p>
+    <ol>
+      <li>Go to your Consultant Workspace.</li>
+      <li>Select <strong>Manage Availability</strong>.</li>
+      <li>Add specific day slots (e.g., Mon/Wed 10:00 AM - 12:00 PM).</li>
+      <li>Input timezone and click <strong>Publish Slots</strong>.</li>
+    </ol>
+
+    <div class="alert-box alert-note">
+      <span class="alert-icon">💡</span>
+      <div>
+        <strong>TIP:</strong> Booking status transitions automatically from <em>Pending</em> to <em>Confirmed</em> upon successful mock payment clearance in the overlay.
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 8: SECTION 6 -->
+  <div class="page page-break" id="section6">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 6: Products &amp; Hubs</span>
+    </div>
+    
+    <h1>6. Products, Events &amp; Knowledge Hub</h1>
+
+    <h3>6.1 Product Catalog</h3>
+    <p>Enterprise nodes list product availability for potential wholesale buyers (<a href="/products">/products</a>):</p>
+    <ul>
+      <li>Click <strong>Add Product Listing</strong> to open the product editor form.</li>
+      <li>Input target wholesale price, stock quantities, and product category.</li>
+      <li>Saved products appear under your organization's card in search directories.</li>
+    </ul>
+
+    <h3>6.2 Conclaves &amp; Events</h3>
+    <p>Networking conclaves are organized to coordinate buyer-seller meets (<a href="/events">/events</a>):</p>
+    <ul>
+      <li>Browse upcoming events and webinars.</li>
+      <li>Click <strong>Register for Event</strong> to reserve attendance.</li>
+      <li>Association nodes can request event host permissions to compile new conclaves.</li>
+    </ul>
+
+    <h3>6.3 Knowledge Hub</h3>
+    <p>The Knowledge Hub (<a href="/resources">/resources</a>) provides access to regulatory resources:</p>
+    <ul>
+      <li>Browse PDFs, guidelines, and articles on international trade tariffs, export taxation, and compliance.</li>
+      <li>Vetted consultants and admins can publish new whitepapers directly using the Resource form.</li>
+    </ul>
+  </div>
+
+  <!-- PAGE 9: SECTION 7 -->
+  <div class="page page-break" id="section7">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 7: Messaging</span>
+    </div>
+    
+    <h1>7. Communication &amp; Real-time Messaging</h1>
+    <p>The BizGrowth messaging system (<a href="/messages">/messages</a>) supports secure client-consultant and buyer-seller communications:</p>
+
+    <h3>7.1 Initiating an Enterprise Conversation</h3>
+    <ol>
+      <li>Navigate to any marketplace listing, product detail card, or consultant profile.</li>
+      <li>Click the <strong>Send Message</strong> button.</li>
+      <li>An inbox thread is initialized automatically.</li>
+      <li>Type details about pricing, custom parameters, or meeting schedules, and send.</li>
+    </ol>
+
+    <div class="alert-box alert-important">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>IMPORTANT:</strong> For safety reasons, do not share credentials or registry passwords inside messaging channels. The support team will never request access keys in a message thread.
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 10: SECTION 8 -->
+  <div class="page page-break" id="section8">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 8: Administration</span>
+    </div>
+    
+    <h1>8. Platform Administration &amp; Moderation</h1>
+    <p>The Admin Dashboard console (<a href="/admin">/admin</a>) is accessible only to accounts flagged with the admin credential in the DB:</p>
+
+    <h3>8.1 Verification Queue</h3>
+    <p>Administrators review pending organizations to grant verification badges:</p>
+    <ul>
+      <li>Navigate to the approval registry on the admin dashboard.</li>
+      <li>Review company registry certifications and domain registrations.</li>
+      <li>Click <strong>Verify</strong> to approve the profile (adds a blue checkmark to company listings).</li>
+      <li>Click <strong>Reject</strong> and enter clarification notes to request re-submission.</li>
+    </ul>
+
+    <h3>8.2 Moderation Controls</h3>
+    <p>Admins perform active site moderation:</p>
+    <ul>
+      <li>Edit or delete marketplace listings flagged as spam or containing restricted inventory.</li>
+      <li>Vetting consultant profile credentials and removing unverified advisors.</li>
+      <li>Deactivating profiles showing fraudulent patterns or violating trade codes.</li>
+    </ul>
+  </div>
+
+  <!-- PAGE 11: SECTION 9 -->
+  <div class="page page-break" id="section9">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 9: Access Matrix</span>
+    </div>
+    
+    <h1>9. Roles &amp; Access Summary</h1>
+    <p>BizGrowth enforces Role-Based Access Control (RBAC) across all routes and API endpoints:</p>
+
+    <table style="margin-top:20px">
+      <thead>
+        <tr>
+          <th>Workspace Feature</th>
+          <th>Visitor</th>
+          <th>Client Node</th>
+          <th>Consultant</th>
+          <th>Admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Browse Marketplace &amp; Hubs</td>
+          <td>✓</td>
+          <td>✓</td>
+          <td>✓</td>
+          <td>✓</td>
+        </tr>
+        <tr>
+          <td>Register Organizations</td>
+          <td>—</td>
+          <td>✓</td>
+          <td>—</td>
+          <td>✓</td>
+        </tr>
+        <tr>
+          <td>Create Marketplace Opportunity</td>
+          <td>—</td>
+          <td>✓</td>
+          <td>—</td>
+          <td>✓</td>
+        </tr>
+        <tr>
+          <td>Set Consultant Booking Slots</td>
+          <td>—</td>
+          <td>—</td>
+          <td>✓</td>
+          <td>✓</td>
+        </tr>
+        <tr>
+          <td>Book Advisory Consultations</td>
+          <td>—</td>
+          <td>✓</td>
+          <td>—</td>
+          <td>✓</td>
+        </tr>
+        <tr>
+          <td>Publish Resources &amp; Guides</td>
+          <td>—</td>
+          <td>—</td>
+          <td>✓</td>
+          <td>✓</td>
+        </tr>
+        <tr>
+          <td>Verify Nodes &amp; Moderate content</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGE 12: SECTION 10 -->
+  <div class="page page-break" id="section10">
+    <div class="header-rule">
+      <span>BizGrowth User Manual</span>
+      <span>Section 10: Glossary &amp; Help</span>
+    </div>
+    
+    <h1>10. Key Concepts, Glossary &amp; Troubleshooting</h1>
+
+    <h3>10.1 Key Concepts &amp; Glossary</h3>
+    <ul>
+      <li><strong>Client Node:</strong> The enterprise account type created for MSMEs, manufacturers, and corporate businesses.</li>
+      <li><strong>Consultant Node:</strong> Vetted strategic advisors offering trade, compliance, audit, and tax consulting services.</li>
+      <li><strong>India to Global:</strong> Directory listing export trade cards created by Indian firms targeting international markets.</li>
+      <li><strong>Global to India:</strong> Directory listing import requirements created by foreign entities sourcing from India.</li>
+      <li><strong>Smart Matchmaking:</strong> Algorithm matching listings by scanning and correlating tag lists in real-time.</li>
+    </ul>
+
+    <h3>10.2 Troubleshooting Guide</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Encountered Error</th>
+          <th>Probable Cause</th>
+          <th>Suggested Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Cannot post opportunities</td>
+          <td>Organization is incomplete or unverified.</td>
+          <td>Go to My Organizations, fill out profile, and wait for verification badge.</td>
+        </tr>
+        <tr>
+          <td>Consultant profile not in search</td>
+          <td>Availability slots have not been configured.</td>
+          <td>Go to availability settings, add slots, and save hours.</td>
+        </tr>
+        <tr>
+          <td>Admin dashboard is blank</td>
+          <td>Signed-in user lacks admin role in the DB.</td>
+          <td>Verify you are logged in using an official admin account (e.g. admin@bizgrowth.com).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="background-color: #EFF6FF; padding: 1.5rem; border-radius: 8px; border: 1px solid #BFDBFE; text-align: center; margin-top: 2rem;">
+      <p style="font-weight: 700; color: #1E3A8A; margin-bottom: 0.25rem;">END OF BIZGROWTH USER MANUAL</p>
+      <p style="font-size: 0.9rem; color: #1E40AF; margin-bottom: 0.75rem;">Support: Contact Platform Administrator</p>
+      <p style="font-size: 0.95rem; font-weight: 600;"><a href="https://bizgrowth.vercel.app" style="color: #2563EB;">https://bizgrowth.vercel.app</a></p>
+    </div>
+  </div>
+
+</body>
+</html>
