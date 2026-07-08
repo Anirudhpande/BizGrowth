@@ -140,7 +140,7 @@ export default function Events() {
                       {e.type}
                     </span>
                     <span className="text-[11px] text-on-surface-variant font-semibold flex items-center gap-0.5">
-                      📅 {new Date(e.date).toLocaleDateString()}
+                      📅 {new Date(e.eventDate || e.date).toLocaleDateString()}
                     </span>
                   </div>
 

@@ -935,7 +935,7 @@ export default function Dashboard() {
                         <div>
                           <h4 className="font-bold text-primary text-body-md">{e.title}</h4>
                           <p className="text-[12px] text-on-surface-variant mt-1">
-                            📅 {new Date(e.date).toLocaleDateString()} at {e.time || 'TBD'}
+                            📅 {new Date(e.eventDate || e.date).toLocaleDateString()} at {e.time || 'TBD'}
                           </p>
                         </div>
                         <button
@@ -973,7 +973,7 @@ export default function Dashboard() {
                         <div>
                           <h4 className="font-bold text-primary text-body-md">{e.title}</h4>
                           <p className="text-[12px] text-on-surface-variant mt-1">
-                            📅 {new Date(e.date).toLocaleDateString()}
+                            📅 {new Date(e.eventDate || e.date).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="space-x-2">

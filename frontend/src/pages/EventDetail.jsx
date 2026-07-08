@@ -321,7 +321,7 @@ export default function EventDetail() {
             )}
 
             {/* Review Submission Form Card */}
-            {user && registered && new Date(event.date) < new Date() && !reviews.some(r => r.userId === user.id) && (
+            {user && registered && new Date(event.eventDate || event.date) < new Date() && !reviews.some(r => r.userId === user.id) && (
               <form onSubmit={handleReviewSubmit} className="bg-surface p-6 rounded-2xl border border-outline-variant/15 shadow-sm space-y-4 pt-6">
                 <h4 className="font-bold text-primary text-body-md">Share Your Experience</h4>
                 <p className="text-[12px] text-on-surface-variant font-medium mt-1">Since you attended this past event, your feedback is highly appreciated.</p>
