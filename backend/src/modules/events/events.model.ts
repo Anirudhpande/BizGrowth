@@ -197,7 +197,7 @@ class EventsModel {
     }
     if ((query as any).type) {
       conditions.push(`type = $${idx++}`);
-      params.push((query as any).type);
+      params.push((query as any).type.toLowerCase());
     }
     if ((query as any).status) {
       conditions.push(`status = $${idx++}`);
