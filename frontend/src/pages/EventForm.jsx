@@ -68,6 +68,7 @@ export default function EventForm() {
       title,
       description,
       date: new Date(date).toISOString(),
+      eventDate: new Date(date).toISOString(),
       time,
       location: location.trim() || 'Online',
       type,

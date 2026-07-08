@@ -28,17 +28,18 @@ class EventsService {
     return Events.getRegisteredEvents(userId);
   }
 
-  async createEvent(organizerId: string, input: CreateEventInput): Promise<IEvent> {
-    if (!input.title || !input.eventDate) {
+  async createEvent(organizerId: string, input: CreateEventInput & { date?: string }): Promise<IEvent> {
+    const eventDate = input.eventDate || input.date;
+    if (!input.title || !eventDate) {
       throw Object.assign(new Error('Title and event date are required'), { statusCode: 400 });
     }
-    return Events.create(organizerId, input);
+    return Events.create(organizerId, { ...input, eventDate });
   }
 
   async updateEvent(
     eventId: string,
     userId: string,
-    input: UpdateEventInput,
+    input: UpdateEventInput & { date?: string },
     isAdmin: boolean
   ): Promise<IEvent> {
     const existing = await Events.findById(eventId);
@@ -48,7 +49,8 @@ class EventsService {
     if (!isAdmin && existing.organizerId !== userId) {
       throw Object.assign(new Error('You do not have permission to update this event'), { statusCode: 403 });
     }
-    return Events.update(eventId, input);
+    const eventDate = input.eventDate || input.date;
+    return Events.update(eventId, { ...input, ...(eventDate ? { eventDate } : {}) });
   }
 
   async deleteEvent(eventId: string, userId: string, isAdmin: boolean): Promise<void> {
