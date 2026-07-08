@@ -33,7 +33,8 @@ class EventsService {
     if (!input.title || !eventDate) {
       throw Object.assign(new Error('Title and event date are required'), { statusCode: 400 });
     }
-    return Events.create(organizerId, { ...input, eventDate });
+    const type = input.type ? input.type.toLowerCase() : 'other';
+    return Events.create(organizerId, { ...input, eventDate, type });
   }
 
   async updateEvent(
@@ -50,7 +51,12 @@ class EventsService {
       throw Object.assign(new Error('You do not have permission to update this event'), { statusCode: 403 });
     }
     const eventDate = input.eventDate || input.date;
-    return Events.update(eventId, { ...input, ...(eventDate ? { eventDate } : {}) });
+    const type = input.type ? input.type.toLowerCase() : undefined;
+    return Events.update(eventId, { 
+      ...input, 
+      ...(eventDate ? { eventDate } : {}),
+      ...(type ? { type } : {})
+    });
   }
 
   async deleteEvent(eventId: string, userId: string, isAdmin: boolean): Promise<void> {

@@ -71,7 +71,7 @@ export default function EventForm() {
       eventDate: new Date(date).toISOString(),
       time,
       location: location.trim() || 'Online',
-      type,
+      type: type.toLowerCase(),
       capacity: parseInt(capacity) || 100
     };
 
