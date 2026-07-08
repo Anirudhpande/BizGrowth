@@ -80,8 +80,8 @@ export default function OrganizationForm() {
     setSuccess('')
     setLoading(true)
 
-    if (formData.phone && formData.phone.trim().replace(/\D/g, '').length < 7) {
-      setError('Connection Telephone number must be at least 7 digits.')
+    if (formData.phone && formData.phone.trim().replace(/\D/g, '').length < 10) {
+      setError('Connection Telephone number must be at least 10 digits.')
       setLoading(false)
       return
     }

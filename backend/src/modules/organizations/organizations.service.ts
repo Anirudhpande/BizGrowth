@@ -41,8 +41,8 @@ class OrganizationsService {
     if (!input.name || input.name.trim().length < 2) {
       throw new AppError('Organization name must be at least 2 characters', 400);
     }
-    if (input.phone && input.phone.trim().replace(/\D/g, '').length < 7) {
-      throw new AppError('Phone number must be at least 7 digits', 400);
+    if (input.phone && input.phone.trim().replace(/\D/g, '').length < 10) {
+      throw new AppError('Phone number must be at least 10 digits', 400);
     }
     return Organizations.create(userId, input);
   }
@@ -70,8 +70,8 @@ class OrganizationsService {
     if (input.name !== undefined && input.name.trim().length < 2) {
       throw new AppError('Organization name must be at least 2 characters', 400);
     }
-    if (input.phone && input.phone.trim().replace(/\D/g, '').length < 7) {
-      throw new AppError('Phone number must be at least 7 digits', 400);
+    if (input.phone && input.phone.trim().replace(/\D/g, '').length < 10) {
+      throw new AppError('Phone number must be at least 10 digits', 400);
     }
 
     return Organizations.update(id, input);
