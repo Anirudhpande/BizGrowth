@@ -86,7 +86,7 @@ class EventReviewsModel {
                 p.first_name as "firstName", p.last_name as "lastName", p.avatar_url as "avatarUrl", u.email
          FROM public.event_reviews er
          JOIN public.users u ON er.user_id = u.id
-         JOIN public.profiles p ON u.profile_id = p.id
+         JOIN public.profiles p ON u.id = p.auth_user_id
          WHERE er.event_id = $1
          ORDER BY er.created_at DESC`,
         [eventId]

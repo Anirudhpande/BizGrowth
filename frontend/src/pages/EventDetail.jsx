@@ -38,20 +38,18 @@ export default function EventDetail() {
       }
 
       // 2. Get Attendees List
-      try {
-        const attendeesRes = await api.get(`/api/events/${id}/attendees`);
-        if (attendeesRes && attendeesRes.success && Array.isArray(attendeesRes.data)) {
-          setAttendees(attendeesRes.data);
-          // Check if current logged-in user is registered
-          if (user) {
+      if (user) {
+        try {
+          const attendeesRes = await api.get(`/api/events/${id}/attendees`);
+          if (attendeesRes && attendeesRes.success && Array.isArray(attendeesRes.data)) {
+            setAttendees(attendeesRes.data);
+            // Check if current logged-in user is registered
             const isRegistered = attendeesRes.data.some(att => att.user_id === user.id || att.id === user.id);
             setRegistered(isRegistered);
           }
-        }
-      } catch (attErr) {
-        console.warn('Could not fetch attendees list (probably permission/not organizer):', attErr);
-        // Fallback: fetch registered events of client to check registration status
-        if (user) {
+        } catch (attErr) {
+          console.warn('Could not fetch attendees list (probably permission/not organizer):', attErr);
+          // Fallback: fetch registered events of client to check registration status
           const regEvents = await api.get('/api/events/registered');
           const isRegistered = regEvents && regEvents.success && Array.isArray(regEvents.data) 
             ? regEvents.data.some(ev => ev.id === id) 
