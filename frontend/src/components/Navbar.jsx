@@ -92,22 +92,23 @@ export default function Navbar() {
       }`}
       id="main-nav"
     >
-      <div className="max-w-[1280px] mx-auto flex justify-between items-center px-margin-mobile md:px-margin-desktop h-full">
-        {/* Brand/Logo */}
-        <Link to="/" className="flex items-center gap-2 text-primary hover:opacity-85 transition-opacity">
+      {/* 3-column layout: Logo Left | Nav Links Center | Actions Right */}
+      <div className="max-w-[1280px] mx-auto w-full h-full px-4 md:px-8 flex flex-row justify-between items-center">
+        {/* LEFT — Brand/Logo */}
+        <Link to="/" className="flex items-center gap-2 text-primary hover:opacity-85 transition-opacity shrink-0 py-2">
           <span className="material-symbols-outlined icon-fill text-primary" style={{ fontSize: '28px' }}>public</span>
-          <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight">BizGrowth</span>
+          <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight leading-none">BizGrowth</span>
         </Link>
 
-        {/* Links (Desktop) */}
+        {/* CENTER — Links (Desktop) */}
         <div className="hidden md:flex items-center gap-6">
           <NavLink 
             to="/ecosystem" 
             className={({ isActive }) => 
-              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+              `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                 isActive 
-                  ? 'text-secondary font-bold border-secondary' 
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  ? 'text-secondary border-secondary font-bold' 
+                  : 'text-on-surface-variant hover:text-primary border-transparent'
               }`
             }
           >
@@ -116,10 +117,10 @@ export default function Navbar() {
           <NavLink 
             to="/marketplace" 
             className={({ isActive }) => 
-              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+              `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                 isActive 
-                  ? 'text-secondary font-bold border-secondary' 
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  ? 'text-secondary border-secondary font-bold' 
+                  : 'text-on-surface-variant hover:text-primary border-transparent'
               }`
             }
           >
@@ -128,17 +129,17 @@ export default function Navbar() {
           <NavLink 
             to="/products" 
             className={({ isActive }) => 
-              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+              `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                 isActive 
-                  ? 'text-secondary font-bold border-secondary' 
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  ? 'text-secondary border-secondary font-bold' 
+                  : 'text-on-surface-variant hover:text-primary border-transparent'
               }`
             }
           >
             Products
           </NavLink>
-          <div className="relative group">
-            <span className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all duration-300 pb-1 border-b-2 border-transparent cursor-pointer flex items-center gap-1">
+          <div className="relative group flex items-center py-2">
+            <span className="text-[15px] font-semibold text-on-surface-variant hover:text-primary transition-all border-b-2 border-transparent cursor-pointer flex items-center gap-1 leading-none">
               Trade <span className="material-symbols-outlined text-[16px]">expand_more</span>
             </span>
             <div className="absolute left-0 top-full mt-2 w-48 bg-surface border border-outline-variant/30 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex flex-col overflow-hidden z-50">
@@ -153,10 +154,10 @@ export default function Navbar() {
           <NavLink 
             to="/consultants" 
             className={({ isActive }) => 
-              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+              `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                 isActive 
-                  ? 'text-secondary font-bold border-secondary' 
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  ? 'text-secondary border-secondary font-bold' 
+                  : 'text-on-surface-variant hover:text-primary border-transparent'
               }`
             }
           >
@@ -165,10 +166,10 @@ export default function Navbar() {
           <NavLink 
             to="/events" 
             className={({ isActive }) => 
-              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+              `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                 isActive 
-                  ? 'text-secondary font-bold border-secondary' 
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  ? 'text-secondary border-secondary font-bold' 
+                  : 'text-on-surface-variant hover:text-primary border-transparent'
               }`
             }
           >
@@ -177,66 +178,28 @@ export default function Navbar() {
           <NavLink 
             to="/resources" 
             className={({ isActive }) => 
-              `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+              `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                 isActive 
-                  ? 'text-secondary font-bold border-secondary' 
-                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                  ? 'text-secondary border-secondary font-bold' 
+                  : 'text-on-surface-variant hover:text-primary border-transparent'
               }`
             }
           >
             Resources
           </NavLink>
-          {user && (
-            <NavLink 
-              to="/ai-advisor" 
-              className={({ isActive }) => 
-                `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
-                  isActive 
-                    ? 'text-secondary font-bold border-secondary' 
-                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
-                }`
-              }
-            >
-              AI Advisor
-            </NavLink>
-          )}
         </div>
 
-        {/* Actions (Desktop) */}
-        <div className="hidden md:flex items-center gap-4">
+        {/* RIGHT — Actions (Desktop) */}
+        <div className="hidden md:flex items-center gap-4 shrink-0">
           {user ? (
             <>
               <NavLink 
-                to="/dashboard" 
-                className={({ isActive }) => 
-                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
-                    isActive 
-                      ? 'text-secondary font-bold border-secondary' 
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
-                  }`
-                }
-              >
-                Dashboard
-              </NavLink>
-              <NavLink 
-                to="/organizations" 
-                className={({ isActive }) => 
-                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
-                    isActive 
-                      ? 'text-secondary font-bold border-secondary' 
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
-                  }`
-                }
-              >
-                My Organizations
-              </NavLink>
-              <NavLink 
                 to="/messages" 
                 className={({ isActive }) => 
-                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
+                  `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                     isActive 
-                      ? 'text-secondary font-bold border-secondary' 
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                      ? 'text-secondary border-secondary font-bold' 
+                      : 'text-on-surface-variant hover:text-primary border-transparent'
                   }`
                 }
               >
@@ -244,12 +207,12 @@ export default function Navbar() {
               </NavLink>
               <Link 
                 to="/dashboard?tab=notifications" 
-                className="relative p-2 text-on-surface-variant hover:text-primary transition-all mr-3 flex items-center"
+                className="relative p-1.5 text-on-surface-variant hover:text-primary transition-all flex items-center"
                 title="Notifications"
               >
-                <span className="material-symbols-outlined text-[24px]">notifications</span>
+                <span className="material-symbols-outlined text-[22px]">notifications</span>
                 {unreadNotifications > 0 && (
-                  <span className="absolute top-1 right-1 bg-error text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface">
+                  <span className="absolute -top-1 -right-1 bg-error text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-surface">
                     {unreadNotifications}
                   </span>
                 )}
@@ -258,50 +221,54 @@ export default function Navbar() {
                 <NavLink 
                   to="/admin" 
                   className={({ isActive }) => 
-                    `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 mr-3 ${
+                    `text-[15px] font-semibold py-2 transition-all border-b-2 leading-none flex items-center ${
                       isActive 
-                        ? 'text-secondary font-bold border-secondary' 
-                        : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                        ? 'text-secondary border-secondary font-bold' 
+                        : 'text-on-surface-variant hover:text-primary border-transparent'
                     }`
                   }
                 >
                   Admin
                 </NavLink>
               )}
-              <NavLink 
-                to="/profile" 
-                className={({ isActive }) => 
-                  `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
-                    isActive 
-                      ? 'text-secondary font-bold border-secondary' 
-                      : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
-                  }`
-                }
-              >
-                Profile
-              </NavLink>
-              <span className="font-label-md text-label-md text-on-surface-variant flex items-center gap-1.5 px-3 py-2">
-                <span className="material-symbols-outlined text-[20px] text-primary">person</span>
-                Hi, <span className="font-bold text-primary">{user.name}</span>
-              </span>
-              <button 
-                onClick={handleLogout}
-                className="border border-outline text-primary hover:text-on-primary bg-transparent hover:bg-primary font-label-md text-label-md px-5 py-2.5 rounded-full transition-all duration-300 scale-95 active:scale-90 flex items-center justify-center font-semibold"
-              >
-                Logout
-              </button>
+              {/* My Account Dropdown */}
+              <div className="relative group flex items-center">
+                <button className="text-[14px] text-on-surface-variant hover:text-primary transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-surface-container-low border border-outline-variant/40">
+                  <span className="material-symbols-outlined text-[18px] text-primary">person</span>
+                  <span className="font-semibold text-primary">{user.name?.split(' ')[0]}</span>
+                  <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-52 bg-surface border border-outline-variant/30 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex flex-col overflow-hidden z-50">
+                  <Link to="/dashboard" className="px-4 py-3 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">dashboard</span> Dashboard
+                  </Link>
+                  <Link to="/profile" className="px-4 py-3 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">manage_accounts</span> Profile
+                  </Link>
+                  <Link to="/organizations" className="px-4 py-3 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">corporate_fare</span> My Organizations
+                  </Link>
+                  <Link to="/ai-advisor" className="px-4 py-3 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">auto_awesome</span> AI Advisor
+                  </Link>
+                  <div className="h-px bg-outline-variant/30 mx-3" />
+                  <button onClick={handleLogout} className="px-4 py-3 text-sm font-semibold text-error hover:bg-error/5 transition-colors flex items-center gap-2 w-full text-left">
+                    <span className="material-symbols-outlined text-[18px]">logout</span> Logout
+                  </button>
+                </div>
+              </div>
             </>
           ) : (
             <>
               <Link 
                 to="/login" 
-                className="font-label-md text-label-md text-primary hover:bg-surface-container-low px-4 py-2 rounded-full transition-all duration-300 scale-95 active:scale-90 flex items-center justify-center font-semibold"
+                className="font-body-md text-body-md text-primary hover:bg-surface-container-low px-4 py-2 rounded-full transition-all duration-300 flex items-center justify-center font-semibold"
               >
                 Login
               </Link>
               <Link 
                 to="/register" 
-                className="bg-primary text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-full hover:bg-primary/90 transition-all duration-300 shadow-md scale-95 active:scale-90 flex items-center justify-center font-semibold"
+                className="bg-primary text-on-primary font-body-md text-body-md px-6 py-2.5 rounded-full hover:bg-primary/90 transition-all duration-300 shadow-md flex items-center justify-center font-semibold"
               >
                 Join BizGrowth
               </Link>
@@ -326,7 +293,7 @@ export default function Navbar() {
             to="/ecosystem" 
             onClick={() => setIsMobileMenuOpen(false)}
             className={({ isActive }) => 
-              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+              `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                 isActive 
                   ? 'bg-surface-container-low text-secondary font-bold' 
                   : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -339,7 +306,7 @@ export default function Navbar() {
             to="/marketplace" 
             onClick={() => setIsMobileMenuOpen(false)}
             className={({ isActive }) => 
-              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+              `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                 isActive 
                   ? 'bg-surface-container-low text-secondary font-bold' 
                   : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -352,7 +319,7 @@ export default function Navbar() {
             to="/products" 
             onClick={() => setIsMobileMenuOpen(false)}
             className={({ isActive }) => 
-              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+              `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                 isActive 
                   ? 'bg-surface-container-low text-secondary font-bold' 
                   : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -366,7 +333,7 @@ export default function Navbar() {
               to="/global-to-india" 
               onClick={() => setIsMobileMenuOpen(false)}
               className={({ isActive }) => 
-                `font-label-md text-label-md py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 ${
+                `font-body-md text-body-md py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 ${
                   isActive ? 'text-blue-600 font-bold bg-blue-50' : 'text-on-surface-variant hover:bg-surface-container-low'
                 }`
               }
@@ -377,7 +344,7 @@ export default function Navbar() {
               to="/india-to-global" 
               onClick={() => setIsMobileMenuOpen(false)}
               className={({ isActive }) => 
-                `font-label-md text-label-md py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 ${
+                `font-body-md text-body-md py-1.5 px-3 rounded-lg transition-colors flex items-center gap-2 ${
                   isActive ? 'text-orange-600 font-bold bg-orange-50' : 'text-on-surface-variant hover:bg-surface-container-low'
                 }`
               }
@@ -389,7 +356,7 @@ export default function Navbar() {
             to="/consultants" 
             onClick={() => setIsMobileMenuOpen(false)}
             className={({ isActive }) => 
-              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+              `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                 isActive 
                   ? 'bg-surface-container-low text-secondary font-bold' 
                   : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -402,7 +369,7 @@ export default function Navbar() {
             to="/events" 
             onClick={() => setIsMobileMenuOpen(false)}
             className={({ isActive }) => 
-              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+              `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                 isActive 
                   ? 'bg-surface-container-low text-secondary font-bold' 
                   : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -415,7 +382,7 @@ export default function Navbar() {
             to="/resources" 
             onClick={() => setIsMobileMenuOpen(false)}
             className={({ isActive }) => 
-              `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+              `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                 isActive 
                   ? 'bg-surface-container-low text-secondary font-bold' 
                   : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -429,7 +396,7 @@ export default function Navbar() {
               to="/ai-advisor" 
               onClick={() => setIsMobileMenuOpen(false)}
               className={({ isActive }) => 
-                `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+                `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors ${
                   isActive 
                     ? 'bg-surface-container-low text-secondary font-bold' 
                     : 'text-on-surface-variant hover:bg-surface-container-low'
@@ -443,101 +410,46 @@ export default function Navbar() {
           <div className="flex flex-col gap-2">
             {user ? (
               <>
-                <div className="text-center font-label-md text-label-md text-on-surface-variant py-1 flex items-center justify-center gap-1">
+                <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-xl">
                   <span className="material-symbols-outlined text-[20px] text-primary">person</span>
-                  Hi, <span className="font-bold text-primary">{user.name}</span>
+                  <span className="font-body-md text-body-md font-bold text-primary">{user.name}</span>
                 </div>
-                <NavLink 
-                  to="/dashboard" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => 
-                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 ${
-                      isActive 
-                        ? 'border-secondary text-secondary font-bold' 
-                        : 'border-outline text-primary hover:bg-surface-container-low'
-                    }`
-                  }
-                >
-                  Dashboard
+                {/* My Account section */}
+                <p className="text-[11px] font-bold text-on-surface-variant/50 uppercase tracking-wider px-1 mt-1">My Account</p>
+                <NavLink to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 ${ isActive ? 'bg-surface-container-low text-secondary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>
+                  <span className="material-symbols-outlined text-[18px]">dashboard</span> Dashboard
                 </NavLink>
-                <NavLink 
-                  to="/organizations" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => 
-                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 ${
-                      isActive 
-                        ? 'border-secondary text-secondary font-bold' 
-                        : 'border-outline text-primary hover:bg-surface-container-low'
-                    }`
-                  }
-                >
-                  My Organizations
+                <NavLink to="/profile" onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 ${ isActive ? 'bg-surface-container-low text-secondary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>
+                  <span className="material-symbols-outlined text-[18px]">manage_accounts</span> Profile
                 </NavLink>
-                <NavLink 
-                  to="/messages" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => 
-                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 ${
-                      isActive 
-                        ? 'border-secondary text-secondary font-bold' 
-                        : 'border-outline text-primary hover:bg-surface-container-low'
-                    }`
-                  }
-                >
-                  Messages
+                <NavLink to="/organizations" onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 ${ isActive ? 'bg-surface-container-low text-secondary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>
+                  <span className="material-symbols-outlined text-[18px]">corporate_fare</span> My Organizations
                 </NavLink>
-                <NavLink 
-                  to="/dashboard?tab=notifications" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => 
-                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 flex items-center justify-center gap-1.5 ${
-                      isActive 
-                        ? 'border-secondary text-secondary font-bold' 
-                        : 'border-outline text-primary hover:bg-surface-container-low'
-                    }`
-                  }
-                >
-                  <span className="material-symbols-outlined text-[20px]">notifications</span>
+                <NavLink to="/messages" onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 ${ isActive ? 'bg-surface-container-low text-secondary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>
+                  <span className="material-symbols-outlined text-[18px]">chat</span> Messages
+                </NavLink>
+                <NavLink to="/dashboard?tab=notifications" onClick={() => setIsMobileMenuOpen(false)}
+                  className={({ isActive }) => `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 ${ isActive ? 'bg-surface-container-low text-secondary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>
+                  <span className="material-symbols-outlined text-[18px]">notifications</span>
                   Notifications
                   {unreadNotifications > 0 && (
-                    <span className="bg-error text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {unreadNotifications}
-                    </span>
+                    <span className="bg-error text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">{unreadNotifications}</span>
                   )}
                 </NavLink>
                 {user?.role === 'admin' && (
-                  <NavLink 
-                    to="/admin" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) => 
-                      `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1 ${
-                        isActive 
-                          ? 'border-secondary text-secondary font-bold' 
-                          : 'border-outline text-primary hover:bg-surface-container-low'
-                      }`
-                    }
-                  >
-                    Admin
+                  <NavLink to="/admin" onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) => `font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 ${ isActive ? 'bg-surface-container-low text-secondary font-bold' : 'text-on-surface-variant hover:bg-surface-container-low'}`}>
+                    <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span> Admin
                   </NavLink>
                 )}
-                <NavLink 
-                  to="/profile" 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) => 
-                    `text-center font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold border mb-1.5 ${
-                      isActive 
-                        ? 'border-secondary text-secondary font-bold' 
-                        : 'border-outline text-primary hover:bg-surface-container-low'
-                    }`
-                  }
-                >
-                  Profile
-                </NavLink>
-                <button 
-                  onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
-                  className="text-center border border-outline text-primary font-label-md text-label-md py-2.5 rounded-full hover:bg-surface-container-low transition-all font-semibold"
-                >
-                  Logout
+                <div className="h-px bg-outline-variant/30 my-1" />
+                <button onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                  className="font-body-md text-body-md py-2 px-3 rounded-lg transition-colors flex items-center gap-2 text-error hover:bg-error/5 w-full text-left">
+                  <span className="material-symbols-outlined text-[18px]">logout</span> Logout
                 </button>
               </>
             ) : (
@@ -545,14 +457,14 @@ export default function Navbar() {
                 <Link 
                   to="/login" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-center font-label-md text-label-md text-primary hover:bg-surface-container-low py-2.5 rounded-full transition-all border border-outline-variant/50 font-semibold"
+                  className="text-center font-body-md text-body-md text-primary hover:bg-surface-container-low py-2.5 rounded-full transition-all border border-outline-variant/50 font-semibold"
                 >
                   Login
                 </Link>
                 <Link 
                   to="/register" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-center bg-primary text-on-primary font-label-md text-label-md py-2.5 rounded-full hover:bg-primary/90 transition-all shadow-md font-semibold"
+                  className="text-center bg-primary text-on-primary font-body-md text-body-md py-2.5 rounded-full hover:bg-primary/90 transition-all shadow-md font-semibold"
                 >
                   Join BizGrowth
                 </Link>
