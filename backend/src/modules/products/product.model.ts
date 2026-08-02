@@ -101,9 +101,14 @@ class ProductModel {
     try {
       await this.ensureTable();
       const { rows } = await db.query(
-        `SELECT p.*, u.name as seller_name, u.email as seller_email, u.phone as seller_phone, u.company as seller_company
+        `SELECT p.*,
+                u.email                                      AS seller_email,
+                COALESCE(pr.first_name || ' ' || pr.last_name, u.name, '') AS seller_name,
+                COALESCE(pr.phone, '')                       AS seller_phone,
+                COALESCE(pr.company_name, '')                AS seller_company
          FROM public.product_listings p
-         LEFT JOIN public.users u ON p.user_id = u.id
+         LEFT JOIN public.users    u  ON u.id  = p.user_id
+         LEFT JOIN public.profiles pr ON pr.auth_user_id = p.user_id
          WHERE p.id = $1 LIMIT 1`,
         [id]
       );

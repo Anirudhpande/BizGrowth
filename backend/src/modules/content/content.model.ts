@@ -20,6 +20,8 @@ export function mapRowToContent(row: ContentRow): IContent {
     type: row.type,
     status: row.status,
     authorId: row.author_id,
+    // snake_case aliases so frontend can read either form
+    author_id: row.author_id,
     tags: row.tags || [],
     industry: row.industry || '',
     thumbnailUrl: row.thumbnail_url || '',
@@ -28,6 +30,8 @@ export function mapRowToContent(row: ContentRow): IContent {
     readTimeMins: row.read_time_mins ?? null,
     publishedAt: row.published_at ? new Date(row.published_at) : null,
     createdAt: new Date(row.created_at),
+    // snake_case alias for frontend compatibility
+    created_at: row.created_at,
     updatedAt: new Date(row.updated_at),
   };
 }
@@ -64,6 +68,10 @@ class ContentModel {
 
   async create(authorId: string, input: CreateContentInput): Promise<IContent> {
     const isPublished = input.status === 'published';
+    // Accept 'content' as a frontend-friendly alias for 'body'
+    const body = input.body || (input as any).content || '';
+    // Normalise type to lowercase to satisfy the DB enum
+    const type = (input.type || 'article').toLowerCase();
     try {
       const { rows } = await db.query(
         `INSERT INTO public.content
@@ -72,9 +80,9 @@ class ContentModel {
          RETURNING *`,
         [
           input.title,
-          input.body || '',
+          body,
           input.summary || '',
-          input.type,
+          type,
           input.status || 'draft',
           authorId,
           input.tags || [],

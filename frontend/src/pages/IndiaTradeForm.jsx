@@ -116,6 +116,21 @@ export default function IndiaTradeForm() {
       setError('Please fill in all required fields (marked with *).');
       return;
     }
+
+    // GI 007 / IG 006 — field-level validations
+    if (form.iecCode && !/^\d{10}$/.test(form.iecCode)) {
+      setError('IEC Code must be exactly 10 digits.');
+      return;
+    }
+    if (form.gstNumber && !/^[A-Z0-9]{15}$/i.test(form.gstNumber)) {
+      setError('GST Number must be exactly 15 alphanumeric characters.');
+      return;
+    }
+    if (form.contactPhone && /[a-zA-Z]/.test(form.contactPhone)) {
+      setError('Contact Phone must not contain letters.');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {

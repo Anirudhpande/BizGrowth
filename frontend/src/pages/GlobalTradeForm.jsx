@@ -107,6 +107,13 @@ export default function GlobalTradeForm() {
       setError('Please fill in all required fields (marked with *).');
       return;
     }
+
+    // GI 006 — phone validation
+    if (form.contactPhone && /[a-zA-Z]/.test(form.contactPhone)) {
+      setError('Contact Phone must not contain letters.');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {

@@ -28,9 +28,18 @@ class EventsService {
     return Events.getRegisteredEvents(userId);
   }
 
+<<<<<<< HEAD
   async createEvent(organizerId: string, input: CreateEventInput & { date?: string }): Promise<IEvent> {
     const eventDate = input.eventDate || input.date;
     if (!input.title || !eventDate) {
+=======
+  async createEvent(organizerId: string, input: CreateEventInput): Promise<IEvent> {
+    // Accept frontend's 'date' key as a fallback for 'eventDate'
+    if (!(input as any).eventDate && (input as any).date) {
+      (input as any).eventDate = (input as any).date;
+    }
+    if (!input.title || !input.eventDate) {
+>>>>>>> 7454458 (fix:)
       throw Object.assign(new Error('Title and event date are required'), { statusCode: 400 });
     }
     const type = input.type ? input.type.toLowerCase() : 'other';

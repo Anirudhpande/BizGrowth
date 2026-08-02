@@ -24,9 +24,13 @@ export function mapRowToListing(row: ListingRow): IListing {
     tags: row.tags || [],
     status: row.status,
     userId: row.user_id,
+    // snake_case alias for frontend compatibility (GI 006)
+    user_id: row.user_id,
     orgId: row.org_id || null,
     views: row.views || 0,
     createdAt: new Date(row.created_at),
+    // snake_case alias for frontend compatibility (MKT 007)
+    created_at: row.created_at,
     updatedAt: new Date(row.updated_at),
   };
 }
