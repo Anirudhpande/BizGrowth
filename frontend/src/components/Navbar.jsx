@@ -50,7 +50,7 @@ export default function Navbar() {
           if (msg.type === 'notification') {
             setUnreadNotifications(prev => prev + 1)
           }
-        } catch {}
+        } catch { /* non-JSON WebSocket frames are intentionally ignored */ }
       }
 
       ws.onclose = () => {
@@ -186,6 +186,20 @@ export default function Navbar() {
           >
             Resources
           </NavLink>
+          {user && (
+            <NavLink 
+              to="/ai-advisor" 
+              className={({ isActive }) => 
+                `font-label-md text-label-md transition-all duration-300 pb-1 border-b-2 ${
+                  isActive 
+                    ? 'text-secondary font-bold border-secondary' 
+                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low border-transparent'
+                }`
+              }
+            >
+              AI Advisor
+            </NavLink>
+          )}
         </div>
 
         {/* Actions (Desktop) */}
@@ -410,6 +424,21 @@ export default function Navbar() {
           >
             Resources
           </NavLink>
+          {user && (
+            <NavLink 
+              to="/ai-advisor" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={({ isActive }) => 
+                `font-label-md text-label-md py-2 px-3 rounded-lg transition-colors ${
+                  isActive 
+                    ? 'bg-surface-container-low text-secondary font-bold' 
+                    : 'text-on-surface-variant hover:bg-surface-container-low'
+                }`
+              }
+            >
+              AI Advisor
+            </NavLink>
+          )}
           <div className="h-[1px] bg-outline-variant/30 my-1"></div>
           <div className="flex flex-col gap-2">
             {user ? (

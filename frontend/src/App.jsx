@@ -36,6 +36,7 @@ import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import ProductForm from './pages/ProductForm'
 import AnalyticsPage from './pages/analytics'
+import AIAdvisor from './pages/AIAdvisor'
 import NotFound from './pages/NotFound'
 import './App.css'
 
@@ -90,6 +91,7 @@ export default function App() {
             <Route path="/consultants/setup" element={<ConsultantSetup />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/ai-advisor" element={<AIAdvisor />} />
             
             <Route path="/global-to-india/new" element={<GlobalTradeForm />} />
             <Route path="/global-to-india/:id/edit" element={<GlobalTradeForm />} />
