@@ -21,8 +21,14 @@ export function mapRowToEvent(row: EventRow, attendeeCount?: number): IEvent {
     description: row.description || '',
     type: row.type,
     status: row.status,
+<<<<<<< HEAD
     eventDate: eventDateObj,
     date: eventDateObj, // Add fallback for frontend e.date references
+=======
+    eventDate: new Date(row.event_date),
+    // snake_case / legacy alias so frontend event.date works
+    date: row.event_date,
+>>>>>>> 7454458 (fix:)
     endDate: row.end_date ? new Date(row.end_date) : null,
     location: row.location || '',
     isVirtual: row.is_virtual,
@@ -104,7 +110,8 @@ class EventsModel {
         [
           input.title,
           input.description || '',
-          input.type || 'other',
+          // Normalise to lowercase so the DB enum accepts it
+          (input.type || 'other').toLowerCase(),
           input.eventDate,
           input.endDate || null,
           input.location || '',
@@ -199,7 +206,12 @@ class EventsModel {
     }
     if ((query as any).type) {
       conditions.push(`type = $${idx++}`);
+<<<<<<< HEAD
       params.push((query as any).type.toLowerCase());
+=======
+      // Normalise to lowercase to match DB enum
+      params.push(((query as any).type as string).toLowerCase());
+>>>>>>> 7454458 (fix:)
     }
     if ((query as any).status) {
       conditions.push(`status = $${idx++}`);

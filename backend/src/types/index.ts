@@ -286,9 +286,13 @@ export interface IListing {
   tags: string[];
   status: ListingStatus;
   userId: string;
+  /** snake_case alias for frontend compatibility */
+  user_id?: string;
   orgId: string | null;
   views: number;
   createdAt: Date;
+  /** snake_case alias for frontend compatibility */
+  created_at?: string;
   updatedAt: Date;
 }
 
@@ -353,6 +357,8 @@ export interface IEvent {
   type: EventType;
   status: EventStatus;
   eventDate: Date;
+  /** snake_case / legacy alias so frontend event.date works */
+  date?: string;
   endDate: Date | null;
   location: string;
   isVirtual: boolean;
@@ -452,6 +458,8 @@ export interface IContent {
   type: ContentType;
   status: ContentStatus;
   authorId: string;
+  /** snake_case alias for frontend compatibility */
+  author_id?: string;
   tags: string[];
   industry: string;
   thumbnailUrl: string;
@@ -460,6 +468,8 @@ export interface IContent {
   readTimeMins: number | null;
   publishedAt: Date | null;
   createdAt: Date;
+  /** snake_case alias for frontend compatibility */
+  created_at?: string;
   updatedAt: Date;
 }
 

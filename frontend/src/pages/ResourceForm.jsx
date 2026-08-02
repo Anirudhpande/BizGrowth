@@ -10,7 +10,7 @@ export default function ResourceForm() {
   // Form Fields
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [type, setType] = useState('Article');
+  const [type, setType] = useState('article');
   const [industry, setIndustry] = useState('Technology');
   const [status, setStatus] = useState('draft');
 
@@ -19,7 +19,13 @@ export default function ResourceForm() {
   const [loadingData, setLoadingData] = useState(isEditMode);
   const [error, setError] = useState('');
 
-  const contentTypes = ['Article', 'Guide', 'Template', 'Checklist', 'Video'];
+  const contentTypeOptions = [
+    { value: 'article',   label: 'Article' },
+    { value: 'guide',     label: 'Guide' },
+    { value: 'template',  label: 'Template' },
+    { value: 'checklist', label: 'Checklist' },
+    { value: 'video',     label: 'Video' },
+  ];
   const industries = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Marketing', 'Consulting', 'Other'];
 
   useEffect(() => {
@@ -33,8 +39,8 @@ export default function ResourceForm() {
         if (res && res.success && res.data) {
           const item = res.data;
           setTitle(item.title || '');
-          setContent(item.content || '');
-          setType(item.type || 'Article');
+          setContent(item.body || '');
+          setType(item.type || 'article');
           setIndustry(item.industry || 'Technology');
           setStatus(item.status || 'draft');
         }
@@ -56,7 +62,7 @@ export default function ResourceForm() {
 
     const payload = {
       title,
-      content,
+      body: content,
       type,
       industry,
       status
@@ -142,8 +148,8 @@ export default function ResourceForm() {
                 onChange={(e) => setType(e.target.value)}
                 className="w-full bg-surface-container-lowest border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
               >
-                {contentTypes.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                {contentTypeOptions.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </div>

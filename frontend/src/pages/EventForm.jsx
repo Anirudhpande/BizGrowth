@@ -13,7 +13,7 @@ export default function EventForm() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
-  const [type, setType] = useState('Webinar');
+  const [type, setType] = useState('webinar');
   const [capacity, setCapacity] = useState('100');
 
   // Page States
@@ -21,7 +21,13 @@ export default function EventForm() {
   const [loadingData, setLoadingData] = useState(isEditMode);
   const [error, setError] = useState('');
 
-  const eventTypes = ['Webinar', 'Workshop', 'Networking', 'Conference', 'Other'];
+  const eventTypeOptions = [
+    { value: 'webinar',     label: 'Webinar' },
+    { value: 'workshop',    label: 'Workshop' },
+    { value: 'networking',  label: 'Networking' },
+    { value: 'conference',  label: 'Conference' },
+    { value: 'other',       label: 'Other' },
+  ];
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -37,15 +43,16 @@ export default function EventForm() {
           setDescription(e.description || '');
           
           // Format ISO date to YYYY-MM-DD for input element
-          if (e.date) {
-            const dateObj = new Date(e.date);
+          const rawDate = e.eventDate;
+          if (rawDate) {
+            const dateObj = new Date(rawDate);
             const formattedDate = dateObj.toISOString().split('T')[0];
             setDate(formattedDate);
           }
           
           setTime(e.time || '');
           setLocation(e.location || '');
-          setType(e.type || 'Webinar');
+          setType(e.type || 'webinar');
           setCapacity(e.capacity ? e.capacity.toString() : '100');
         }
       } catch (err) {
@@ -67,7 +74,10 @@ export default function EventForm() {
     const payload = {
       title,
       description,
+<<<<<<< HEAD
       date: new Date(date).toISOString(),
+=======
+>>>>>>> 7454458 (fix:)
       eventDate: new Date(date).toISOString(),
       time,
       location: location.trim() || 'Online',
@@ -171,8 +181,8 @@ export default function EventForm() {
                 onChange={(e) => setType(e.target.value)}
                 className="w-full bg-surface-container-lowest border border-outline-variant text-primary text-body-sm px-4 py-3 rounded-xl focus:outline-none focus:border-secondary transition-all"
               >
-                {eventTypes.map(t => (
-                  <option key={t} value={t}>{t}</option>
+                {eventTypeOptions.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </div>

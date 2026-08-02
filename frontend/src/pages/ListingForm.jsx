@@ -46,7 +46,7 @@ export default function ListingForm() {
             setBudget(listing.budget ? listing.budget.toString() : '');
             setCurrency(listing.currency || 'INR');
             setLocation(listing.location || '');
-            setOrgId(listing.org_id || '');
+            setOrgId(listing.orgId || listing.org_id || '');
             
             // Format tags (array or parsed JSON to comma string)
             let parsedTags = [];
@@ -81,12 +81,19 @@ export default function ListingForm() {
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0);
 
+    const parsedBudget = parseFloat(budget) || 0;
+    if (parsedBudget < 0) {
+      setError('Budget cannot be negative.');
+      setLoading(false);
+      return;
+    }
+
     const payload = {
       title,
       description,
       type,
       industry,
-      budget: parseFloat(budget) || 0,
+      budget: parsedBudget,
       currency,
       location: location.trim(),
       tags,
